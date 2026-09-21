@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.output/
+.vercel/
+.nitro/
+.tanstack/
+coverage/
+screenshots/
+test-results/
+playwright-report/
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+artifacts/
+attachments/

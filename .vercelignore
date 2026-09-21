@@ -1,0 +1,14 @@
+# Upload only application sources, assets, and build configuration.
+*
+!src/
+!src/**
+!public/
+!public/**
+!scripts/
+!scripts/**
+!package.json
+!package-lock.json
+!vite.config.ts
+!tsconfig.json
+!vercel.json
+!.nvmrc
