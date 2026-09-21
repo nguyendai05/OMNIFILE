@@ -263,7 +263,7 @@ export function Shell() {
           .reverse()
           .map((j) => (
             <div key={j.id} className="flex items-center gap-2 border-b border-border/60 px-3 py-1.5 text-[12px]">
-              <span className="w-20 capitalize text-muted">{j.status}</span>
+              <span className="status-color w-20 capitalize" data-status={j.status}>{j.status}</span>
               <span className="min-w-0 flex-1 truncate">{j.title}</span>
               <span className="w-36 truncate text-faint">{j.message ?? j.error?.message}</span>
               <span className="w-16 text-right mono text-faint">{j.progress === null ? "—" : `${Math.round((j.progress ?? 0) * 100)}%`}</span>

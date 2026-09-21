@@ -205,7 +205,7 @@ export function Inspector() {
         {jobs.map((j) => (
           <div key={j.id} className="mb-1 flex items-center justify-between gap-2">
             <span className="truncate">{j.title}</span>
-            <span className="text-muted">
+            <span className="status-color" data-status={j.status}>
               {j.status}
               {j.finishedAt && j.startedAt ? ` · ${formatDuration(j.finishedAt - j.startedAt)}` : ""}
             </span>

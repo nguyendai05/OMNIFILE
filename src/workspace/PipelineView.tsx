@@ -39,13 +39,15 @@ function OmniNode({ data }: NodeProps) {
         ? "border-success"
         : d.status === "failed"
           ? "border-danger"
-          : "border-border";
+          : d.status === "warning"
+            ? "border-warn"
+            : "border-control-border";
   return (
     <div className={cn("min-w-44 rounded-md border bg-surface-2 px-3 py-2 shadow-[var(--shadow-border)]", tone)}>
       {d.kind !== "input" && <Handle type="target" position={Position.Left} />}
       <div className="text-[10px] uppercase tracking-wide text-muted">{d.kind}</div>
       <div className="text-[12px] font-medium">{d.title}</div>
-      <div className="text-[10px] text-muted">{d.status}</div>
+      <div className="status-color text-[10px]" data-status={d.status}>{d.status}</div>
       {d.error && <div className="mt-1 max-w-48 text-[10px] text-danger">{d.error}</div>}
       {d.kind !== "output" && <Handle type="source" position={Position.Right} />}
     </div>
@@ -55,6 +57,7 @@ function OmniNode({ data }: NodeProps) {
 const nodeTypes = { omni: OmniNode };
 
 export function PipelineView() {
+  const theme = useWorkspace((s) => s.ui.theme);
   const pipelines = useWorkspace((s) => Object.values(s.pipelines));
   const activeId = useWorkspace((s) => s.activePipelineId);
   const files = useWorkspace((s) => s.files);
@@ -209,6 +212,8 @@ export function PipelineView() {
           </Button>
         </div>
         <ReactFlow
+          className="omni-flow"
+          colorMode={theme}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}

@@ -9,24 +9,25 @@
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  --color-background: #0b0c0e;
-  --color-foreground: #e8eaed;
-  --color-surface: #12141a;
-  --color-surface-2: #181b22;
-  --color-surface-3: #1e232c;
-  --color-muted: #8b939e;
-  --color-faint: #5c6570;
-  --color-border: #252a33;
-  --color-primary: #dce3ea;
-  --color-primary-foreground: #0b0c0e;
-  --color-accent: #9eb4c7;
-  --color-accent-foreground: #0b0c0e;
-  --color-ring: #9eb4c7;
-  --color-danger: #c77b76;
-  --color-success: #7da88a;
-  --color-warn: #c4a574;
-  --color-info: #7a9bb8;
-  --color-sidebar: #0e1014;
+  --color-background: #0d131c;
+  --color-foreground: #edf2f8;
+  --color-surface: #151e2b;
+  --color-surface-2: #1c2838;
+  --color-surface-3: #28374b;
+  --color-muted: #b1bfd0;
+  --color-faint: #9aaec4;
+  --color-border: #384a60;
+  --color-control-border: #70869f;
+  --color-primary: #8bbdff;
+  --color-primary-foreground: #102238;
+  --color-accent: #9bc7ff;
+  --color-accent-foreground: #102238;
+  --color-ring: #9bc7ff;
+  --color-danger: #ffaaa5;
+  --color-success: #86d9b2;
+  --color-warn: #f2cd83;
+  --color-info: #9bc7ff;
+  --color-sidebar: #111a26;
   --color-overlay: rgb(8 10 12 / 0.72);
 
   --radius-xs: 2px;
@@ -45,24 +46,25 @@
 }
 
 html[data-theme="light"] {
-  --color-background: #f3f1eb;
-  --color-foreground: #1a1c20;
-  --color-surface: #faf8f4;
+  --color-background: #f1f5fa;
+  --color-foreground: #17283d;
+  --color-surface: #ffffff;
   --color-surface-2: #ffffff;
-  --color-surface-3: #ece8df;
-  --color-muted: #5c6570;
-  --color-faint: #8a8478;
-  --color-border: #d8d3c8;
-  --color-primary: #1a1c20;
-  --color-primary-foreground: #faf8f4;
-  --color-accent: #3d5a73;
-  --color-accent-foreground: #faf8f4;
-  --color-ring: #3d5a73;
-  --color-danger: #9a3f3a;
-  --color-success: #2f6b48;
-  --color-warn: #8a6230;
-  --color-info: #2f5570;
-  --color-sidebar: #ebe6dc;
+  --color-surface-3: #e2eaf4;
+  --color-muted: #465c76;
+  --color-faint: #526780;
+  --color-border: #bdcbdc;
+  --color-control-border: #73859b;
+  --color-primary: #245ca8;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #20559c;
+  --color-accent-foreground: #ffffff;
+  --color-ring: #245ca8;
+  --color-danger: #a32e36;
+  --color-success: #216445;
+  --color-warn: #78500c;
+  --color-info: #20559c;
+  --color-sidebar: #eaf0f7;
   --color-overlay: rgb(28 24 18 / 0.45);
   --shadow-border: 0 0 0 1px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.04);
   --shadow-pop: 0 18px 40px rgb(40 32 20 / 0.18);
@@ -105,10 +107,10 @@ html[data-theme="light"] {
   }
 }
 
-html.dark {
+html:not([data-theme="light"]) {
   color-scheme: dark;
 }
-html.light {
+html[data-theme="light"] {
   color-scheme: light;
 }
 
@@ -116,6 +118,67 @@ html.light {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-control-border) var(--color-background);
+}
+
+input, textarea, select {
+  border-color: var(--color-control-border);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-faint);
+  opacity: 1;
+}
+
+/* Use explicit XYFlow variables so lazy-loaded vendor CSS cannot restore a
+   light minimap or make control icons inherit an unreadable foreground. */
+.react-flow.omni-flow {
+  --xy-background-color: var(--color-background);
+  --xy-edge-stroke: var(--color-control-border);
+  --xy-edge-stroke-width: 1.5;
+  --xy-edge-stroke-selected: var(--color-accent);
+  --xy-connectionline-stroke: var(--color-accent);
+  --xy-handle-background-color: var(--color-accent);
+  --xy-handle-border-color: var(--color-background);
+  --xy-controls-button-background-color: var(--color-surface-2);
+  --xy-controls-button-background-color-hover: var(--color-surface-3);
+  --xy-controls-button-color: var(--color-foreground);
+  --xy-controls-button-color-hover: var(--color-accent);
+  --xy-controls-button-border-color: var(--color-border);
+  --xy-minimap-background-color: var(--color-surface-2);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--color-background) 65%, transparent);
+  --xy-minimap-mask-stroke-color: var(--color-control-border);
+  --xy-minimap-node-background-color: var(--color-accent);
+  --xy-selection-background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  --xy-selection-border: 1px solid var(--color-accent);
+}
+
+.omni-flow .react-flow__controls,
+.omni-flow .react-flow__minimap {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.omni-flow .react-flow__controls-button {
+  width: 36px;
+  height: 36px;
+}
+
+.omni-flow .react-flow__node.selected > div {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 3px;
+}
+
+.status-color { color: var(--color-muted); }
+.status-color[data-status="success"] { color: var(--color-success); }
+.status-color[data-status="failed"] { color: var(--color-danger); }
+.status-color[data-status="warning"] { color: var(--color-warn); }
+.status-color[data-status="running"],
+.status-color[data-status="queued"] { color: var(--color-info); }
 .scrollbar-thin::-webkit-scrollbar {
   width: 10px;
   height: 10px;
