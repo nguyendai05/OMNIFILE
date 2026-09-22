@@ -31,7 +31,9 @@ OCR có thể tải thư viện và dữ liệu ngôn ngữ qua mạng. Hãy t�
 
 ## Chạy từ mã nguồn
 
-Yêu cầu Node.js 22 và npm.
+Yêu cầu Node.js 22 và npm 10 (cùng môi trường cài đặt trên Vercel).
+
+Khi thêm thư viện, dùng npm 10 để cập nhật lockfile. Trước khi push thay đổi phụ thuộc, chạy `npm ci --dry-run` bằng npm 10 để kiểm tra lockfile; npm 11 có thể bỏ mục peer dependency tùy chọn mà npm 10 cần.
 
 ```bash
 npm ci
