@@ -44,6 +44,41 @@ export const extractTextAction: FileAction = {
   },
 };
 
+export const pdfToDocxAction: FileAction = {
+  id: "pdf.to-docx",
+  title: "PDF → DOCX",
+  description: "Tạo Word có thể chỉnh sửa, giữ ngắt trang và bảng. Không gồm ảnh; PDF scan cần OCR.",
+  category: "PDF",
+  accepts: ["pdf"],
+  produces: ["docx"],
+  execution: "local",
+  keywords: ["pdf", "word", "docx", "convert", "chuyển đổi"],
+  configSchema: [
+    { key: "pageRange", label: "Trang (để trống = tất cả; ví dụ 1-3, 5)", type: "string", default: "" },
+    { key: "formatting", label: "Giữ cỡ chữ, in đậm và in nghiêng", type: "boolean", default: true },
+    { key: "tables", label: "Chuyển bảng nhận diện được thành bảng Word", type: "boolean", default: true },
+  ],
+  canRun: ({ files, documents }) => files.length === 1 && documents[0]?.kind === "pdf",
+  async execute(ctx) {
+    const file = ctx.files[0]!;
+    let doc = asPdf(ctx.getDocument(file.id), file.id);
+    // Old persisted documents predate positioned text and font metadata.
+    if (doc.pages.some((page) => !page.items)) {
+      const { pdfParser } = await import("@/parsers/pdf");
+      doc = await pdfParser.parse(file, { blob: await ctx.getBlob(file.id), signal: ctx.signal, onProgress: ctx.onProgress }) as PdfDocument;
+    }
+    const { exportPdfToDocx, DOCX_MIME } = await import("@/exporters/pdf-docx");
+    const { blob, warnings } = await exportPdfToDocx(doc, {
+      pageRange: String(ctx.config.pageRange ?? ""),
+      formatting: ctx.config.formatting !== false,
+      tables: ctx.config.tables !== false,
+      signal: ctx.signal,
+      onProgress: ctx.onProgress,
+    });
+    return { artifacts: [{ name: file.name.replace(/\.pdf$/i, "") + ".docx", blob, mime: DOCX_MIME, kind: "docx" }], warnings };
+  },
+};
+
 export const extractTablesAction: FileAction = {
   id: "pdf.extract-tables",
   title: "Trích xuất bảng",

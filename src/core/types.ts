@@ -218,6 +218,8 @@ export interface PdfTextItem {
   y: number;
   w: number;
   h: number;
+  bold?: boolean;
+  italic?: boolean;
 }
 
 export interface ExtractedTable {
@@ -226,6 +228,8 @@ export interface ExtractedTable {
   headers: string[];
   rows: string[][];
   confidence: number;
+  /** PDF text baselines belonging to this table, in PDF coordinates. */
+  bounds?: { top: number; bottom: number };
 }
 
 export interface PdfPageModel {
@@ -234,6 +238,7 @@ export interface PdfPageModel {
   height: number;
   rotation: number;
   text: string;
+  items?: PdfTextItem[];
   tables: ExtractedTable[];
 }
 

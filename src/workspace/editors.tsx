@@ -28,9 +28,11 @@ import { cellToString, hexDump, profileColumns } from "@/core/table-ops";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, downloadBlob } from "@/lib/utils";
+import { toast } from "sonner";
 import { useDocument } from "./hooks";
 import { runActionUi } from "./run";
+import { PdfDocxControls } from "./pdf-docx-controls";
 import { renderPdfPage } from "@/parsers/pdf";
 
 export function DocumentEditor({ file }: { file: FileRecord }) {
@@ -152,6 +154,7 @@ function PdfEditor({ file, doc }: { file: FileRecord; doc: PdfDocument }) {
         ))}
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
+        <PdfDocxControls key={file.id} file={file} doc={doc} />
         <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
           <Button size="icon" variant="ghost" onClick={() => setPage((p) => Math.max(0, p - 1))}>
             <ChevronLeft />
@@ -623,6 +626,7 @@ function MediaEditor({ file, doc }: { file: FileRecord; doc: MediaDocument }) {
 
 function DocxEditor({ file, doc }: { file: FileRecord; doc: DocxDocument }) {
   useLanguage();
+  const [downloading, setDownloading] = useState(false);
   const html = useMemo(() => DOMPurify.sanitize(doc.html), [doc.html]);
   return (
     <div className="flex h-full min-h-0">
@@ -635,7 +639,17 @@ function DocxEditor({ file, doc }: { file: FileRecord; doc: DocxDocument }) {
         ))}
         {doc.hasMacros && <Badge tone="warn" className="mt-3">{tr("có macro (không thực thi)")}</Badge>}
       </aside>
-      <div className="flex-1 overflow-auto px-8 py-6 text-sm" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="border-b border-border p-2">
+          <Button className="min-h-11" size="sm" disabled={downloading} onClick={async () => {
+            setDownloading(true);
+            try { downloadBlob(await getBlob(file.storageRef), file.name); }
+            catch { toast.error(tr("Không thể tải tệp DOCX")); }
+            finally { setDownloading(false); }
+          }}>{tr("Tải DOCX")}</Button>
+        </div>
+        <div className="flex-1 overflow-auto px-8 py-6 text-sm [&_p]:mb-2 [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:p-2 [&_th]:border [&_th]:border-border [&_th]:bg-surface-2 [&_th]:p-2 [&_th]:text-left" dangerouslySetInnerHTML={{ __html: html }} />
+      </div>
       <span className="hidden">{file.id}</span>
     </div>
   );

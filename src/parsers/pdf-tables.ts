@@ -67,6 +67,7 @@ export function extractTablesFromItems(items: PdfTextItem[], page: number): Extr
           headers,
           rows: body,
           confidence: Math.min(1, 0.5 + filled / 10),
+          bounds: { top: slice[0]!.y, bottom: slice[slice.length - 1]!.y },
         });
       }
       i = j;

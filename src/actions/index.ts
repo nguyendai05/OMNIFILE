@@ -6,6 +6,7 @@ import {
   extractTextAction,
   mergePdfAction,
   splitPdfAction,
+  pdfToDocxAction,
 } from "./pdf";
 import {
   dropDuplicatesAction,
@@ -42,6 +43,7 @@ export function registerActions() {
       hashAction,
       metadataAction,
       extractTextAction,
+      pdfToDocxAction,
       extractTablesAction,
       splitPdfAction,
       mergePdfAction,

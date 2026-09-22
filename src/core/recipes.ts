@@ -19,6 +19,15 @@ export interface Recipe {
 
 export const RECIPES: Recipe[] = [
   {
+    id: "pdf-to-docx",
+    title: "PDF → DOCX",
+    description: "Chuyển PDF thành Word có thể chỉnh sửa. Giữ ngắt trang, cỡ chữ và bảng nhận diện được; không gồm ảnh hoặc OCR.",
+    accepts: ["pdf"],
+    mode: "each",
+    sampleFile: "Welcome.pdf",
+    steps: [{ actionId: "pdf.to-docx" }],
+  },
+  {
     id: "pdf-to-excel",
     title: "PDF → Excel",
     description: "Trích xuất bảng, xóa dòng trống, chuẩn hóa tiêu đề và xuất XLSX. Giữ nguyên PDF gốc.",
