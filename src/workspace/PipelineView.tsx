@@ -1,3 +1,4 @@
+import { uiLabel } from "@/lib/locale";
 import { useCallback, useEffect, useMemo } from "react";
 import {
   ReactFlow,
@@ -45,9 +46,9 @@ function OmniNode({ data }: NodeProps) {
   return (
     <div className={cn("min-w-44 rounded-md border bg-surface-2 px-3 py-2 shadow-[var(--shadow-border)]", tone)}>
       {d.kind !== "input" && <Handle type="target" position={Position.Left} />}
-      <div className="text-[10px] uppercase tracking-wide text-muted">{d.kind}</div>
-      <div className="text-[12px] font-medium">{d.title}</div>
-      <div className="status-color text-[10px]" data-status={d.status}>{d.status}</div>
+      <div className="text-[10px] uppercase tracking-wide text-muted">{uiLabel(d.kind)}</div>
+      <div className="text-[12px] font-medium">{d.actionId ? actionRegistry.get(d.actionId)?.title ?? d.title : d.title}</div>
+      <div className="status-color text-[10px]" data-status={uiLabel(d.status)}>{uiLabel(d.status)}</div>
       {d.error && <div className="mt-1 max-w-48 text-[10px] text-danger">{d.error}</div>}
       {d.kind !== "output" && <Handle type="source" position={Position.Right} />}
     </div>
@@ -147,7 +148,7 @@ export function PipelineView() {
       data: {
         kind: "input",
         fileId: file?.id,
-        title: file ? file.name : "Input file",
+        title: file ? file.name : "Tệp đầu vào",
         accepts: [],
         produces: file ? [file.kind] : (["pdf"] as DocumentKind[]),
         config: {},
@@ -164,8 +165,8 @@ export function PipelineView() {
   if (!pipeline) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3">
-        <p className="text-sm text-muted">No pipeline yet.</p>
-        <Button onClick={() => void createPipeline("PDF to Excel")}>Create pipeline</Button>
+        <p className="text-sm text-muted">Chưa có quy trình.</p>
+        <Button onClick={() => void createPipeline("PDF to Excel")}>Tạo quy trình</Button>
       </div>
     );
   }
@@ -173,11 +174,10 @@ export function PipelineView() {
   return (
     <div className="flex h-full min-h-0">
       <aside className="w-52 shrink-0 overflow-auto border-r border-border p-2">
-        <p className="px-1 pb-2 text-[10px] font-medium uppercase tracking-wide text-muted">Nodes</p>
-        <Button size="sm" variant="secondary" className="mb-2 w-full" onClick={addInput}>
-          Input (selected file)
+        <p className="px-1 pb-2 text-[10px] font-medium uppercase tracking-wide text-muted">Các bước</p>
+        <Button size="sm" variant="secondary" className="mb-2 w-full" onClick={addInput}>Đầu vào (tệp đã chọn)
         </Button>
-        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">Templates</p>
+        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">Mẫu</p>
         {RECIPES.slice(0, 4).map((r) => (
           <button
             key={r.id}
@@ -187,7 +187,7 @@ export function PipelineView() {
             {r.title}
           </button>
         ))}
-        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">Actions</p>
+        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">Thao tác</p>
         {actions.map((a) => (
           <button
             key={a.id}
@@ -204,15 +204,22 @@ export function PipelineView() {
             size="sm"
             onClick={() =>
               void runPipeline(pipeline.id)
-                .then(() => toast.success("Pipeline finished"))
+                .then(() => toast.success("Đã hoàn tất quy trình"))
                 .catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e)))
             }
-          >
-            Run pipeline
+          >Chạy quy trình
           </Button>
         </div>
         <ReactFlow
           className="omni-flow"
+          ariaLabelConfig={{
+            "controls.ariaLabel": "Điều khiển quy trình",
+            "controls.zoomIn.ariaLabel": "Phóng to",
+            "controls.zoomOut.ariaLabel": "Thu nhỏ",
+            "controls.fitView.ariaLabel": "Vừa khung nhìn",
+            "controls.interactive.ariaLabel": "Bật/tắt tương tác",
+            "minimap.ariaLabel": "Sơ đồ thu nhỏ",
+          }}
           colorMode={theme}
           nodes={nodes}
           edges={edges}

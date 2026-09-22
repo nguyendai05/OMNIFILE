@@ -1,3 +1,4 @@
+import { normalizeSearch } from "@/lib/locale";
 import { useMemo, useState } from "react";
 import { ChevronRight, FolderPlus } from "lucide-react";
 import { ensureFolder, openTab, selectFiles } from "@/core/engine";
@@ -15,8 +16,8 @@ export function Explorer() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const visible = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return needle ? files.filter((f) => f.name.toLowerCase().includes(needle)) : files;
+    const needle = normalizeSearch(q.trim());
+    return needle ? files.filter((f) => normalizeSearch(f.name).includes(needle)) : files;
   }, [files, q]);
 
   const roots = folders.filter((f) => !f.parentId);
@@ -28,13 +29,13 @@ export function Explorer() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Filter files"
+          placeholder="Lọc tệp"
           className="h-7 w-full rounded-md border border-border bg-surface px-2 text-xs"
         />
         <button
           className="size-7 rounded-md text-muted hover:bg-surface-2 hover:text-foreground"
-          title="New folder"
-          onClick={() => ensureFolder("Untitled folder")}
+          title="Thư mục mới"
+          onClick={() => ensureFolder("Thư mục chưa đặt tên")}
         >
           <FolderPlus className="mx-auto size-3.5" />
         </button>
@@ -63,7 +64,7 @@ export function Explorer() {
         {unfiled.map((f) => (
           <FileRow key={f.id} id={f.id} name={f.name} kind={f.kind} size={f.size} selected={selected.includes(f.id)} depth={0} />
         ))}
-        {!visible.length && <p className="px-2 py-6 text-center text-[11px] text-faint">Drop files to import</p>}
+        {!visible.length && <p className="px-2 py-6 text-center text-[11px] text-faint">Thả tệp để nhập</p>}
       </div>
     </div>
   );

@@ -18,8 +18,7 @@ export function CompareView() {
 
   if (!left || !right) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">
-        Select two files and open Compare, or drop one file onto another.
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">Chọn hai tệp để so sánh hoặc thả một tệp lên tệp còn lại.
       </div>
     );
   }
@@ -31,8 +30,7 @@ export function CompareView() {
         <span className="text-faint">vs</span>
         <span className="font-medium">{right.name}</span>
         <span className="ml-auto text-muted">{result?.summary}</span>
-        <Button size="xs" variant="ghost" onClick={() => workspaceStore.setState({ compare: null })}>
-          Close
+        <Button size="xs" variant="ghost" onClick={() => workspaceStore.setState({ compare: null })}>Đóng
         </Button>
       </div>
       <div className="flex-1 overflow-auto p-3 font-mono text-[11px] leading-5">

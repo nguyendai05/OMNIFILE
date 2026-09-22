@@ -8,10 +8,10 @@ function tableOf(ctx: Parameters<Exporter["export"]>[0]): TableDocument {
   if (doc?.kind === "table") return doc;
   if (doc?.kind === "spreadsheet") {
     const s = doc.sheets[doc.activeSheet] ?? doc.sheets[0];
-    if (!s) throw new OmniError("ExportFailure", "Empty workbook");
+    if (!s) throw new OmniError("ExportFailure", "Bảng tính trống");
     return { kind: "table", fileId: doc.fileId, title: s.name, columns: s.columns, rows: s.rows };
   }
-  throw new OmniError("ExportFailure", "Not a table");
+  throw new OmniError("ExportFailure", "Không phải dữ liệu bảng");
 }
 
 const csvExporter: Exporter = {
@@ -56,7 +56,7 @@ const xlsxExporter: Exporter = {
 
 const txtExporter: Exporter = {
   id: "txt",
-  title: "Plain text",
+  title: "Văn bản thuần",
   accepts: ["text", "markdown", "code", "html"],
   extension: "txt",
   mime: "text/plain",
@@ -81,7 +81,7 @@ const pngExporter: Exporter = {
     canvas.getContext("2d")!.drawImage(bmp, 0, 0);
     bmp.close?.();
     const out = await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("PNG encode failed"))), "image/png"),
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Không thể mã hóa PNG"))), "image/png"),
     );
     return { name: ctx.files[0]!.name.replace(/\.[^.]+$/, "") + ".png", blob: out, mime: "image/png", kind: "image" };
   },

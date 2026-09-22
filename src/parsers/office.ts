@@ -55,7 +55,7 @@ export const docxParser: FileParser = {
       const textRes = await mammoth.extractRawText({ arrayBuffer: buf });
       text = textRes.value;
     } catch (err) {
-      throw new OmniError("CorruptedFile", "Could not read DOCX", { cause: err });
+      throw new OmniError("CorruptedFile", "Không thể đọc DOCX", { cause: err });
     }
     const JSZip = (await import("jszip")).default;
     let hasMacros = false;
@@ -89,7 +89,7 @@ export const pptxParser: FileParser = {
     try {
       zip = await JSZip.loadAsync(ctx.blob);
     } catch (err) {
-      throw new OmniError("CorruptedFile", "Could not read PPTX", { cause: err });
+      throw new OmniError("CorruptedFile", "Không thể đọc PPTX", { cause: err });
     }
     const slideFiles = Object.keys(zip.files)
       .filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n))

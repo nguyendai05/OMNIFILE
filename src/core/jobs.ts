@@ -18,7 +18,7 @@ export function createJob(init: {
     outputIds: [],
     status: "queued",
     progress: null,
-    logs: [{ at: Date.now(), level: "info", text: "Queued" }],
+    logs: [{ at: Date.now(), level: "info", text: "Đang chờ" }],
     execution: init.execution ?? "local",
   };
   workspaceStore.setState((s) => ({ jobs: { ...s.jobs, [job.id]: job } }));

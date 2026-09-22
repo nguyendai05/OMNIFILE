@@ -1,3 +1,4 @@
+import { normalizeSearch } from "../lib/locale.ts";
 import type { CellValue, ColumnProfile, ColumnType, TableColumn } from "./types";
 
 export function cellToString(v: CellValue): string {
@@ -197,7 +198,7 @@ export function detectAnomalies(profiles: ColumnProfile[], rows: CellValue[][]):
   return issues;
 }
 
-export function aoaToTable(aoa: CellValue[][], title = "Table"): { columns: TableColumn[]; rows: CellValue[][] } {
+export function aoaToTable(aoa: CellValue[][], title = "Bảng"): { columns: TableColumn[]; rows: CellValue[][] } {
   if (!aoa.length) return { columns: [], rows: [] };
   const width = Math.max(...aoa.map((r) => r.length), 0);
   const header = aoa[0] ?? [];
@@ -403,11 +404,11 @@ const SYNONYMS: Array<{ phrase: string; keys: string[] }> = [
 ];
 
 export function scoreSearch(query: string, haystacks: string[]): number {
-  const q = query.toLowerCase().trim();
+  const q = normalizeSearch(query).trim();
   if (!q) return 0;
   const tokens = q.split(/\s+/).filter(Boolean);
   let score = 0;
-  const hay = haystacks.map((h) => h.toLowerCase());
+  const hay = haystacks.map(normalizeSearch);
   for (const h of hay) {
     if (h === q) score += 20;
     else if (h.startsWith(q)) score += 12;

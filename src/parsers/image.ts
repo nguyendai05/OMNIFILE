@@ -5,7 +5,7 @@ export async function loadImageBitmap(blob: Blob): Promise<ImageBitmap> {
   if (typeof createImageBitmap === "function") {
     return createImageBitmap(blob);
   }
-  throw new OmniError("ParserFailure", "Image decoding is not supported in this browser");
+  throw new OmniError("ParserFailure", "Trình duyệt không hỗ trợ giải mã hình ảnh");
 }
 
 function histogramFrom(canvas: HTMLCanvasElement | OffscreenCanvas): { r: number[]; g: number[]; b: number[] } {
@@ -28,7 +28,7 @@ function histogramFrom(canvas: HTMLCanvasElement | OffscreenCanvas): { r: number
 export const imageParser: FileParser = {
   id: "image",
   version: "1.0.0",
-  label: "Image",
+  label: "Hình ảnh",
   supports: (f: FileRecord) => f.kind === "image" || f.kind === "svg" || f.detectedMime.startsWith("image/"),
   async parse(file, ctx: ParserContext): Promise<ImageDocument> {
     throwIfAborted(ctx.signal);

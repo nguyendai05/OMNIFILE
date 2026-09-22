@@ -33,7 +33,7 @@ const textAdapter: CompareAdapter = {
     const removed = parts.filter((p) => p.removed).reduce((n, p) => n + (p.count ?? 0), 0);
     return {
       kind: "text",
-      summary: `${added} added / ${removed} removed lines`,
+      summary: `${added} dòng thêm / ${removed} dòng xóa`,
       hunks: hunks.slice(0, 400),
       metrics: { added, removed },
     };
@@ -48,7 +48,7 @@ const jsonAdapter: CompareAdapter = {
     const db = getDocument(b.id);
     const hunks: CompareResult["hunks"] = [];
     walk(da && "parsed" in da ? da.parsed : null, db && "parsed" in db ? db.parsed : null, "$", hunks);
-    return { kind: "json", summary: `${hunks.filter((h) => h.type !== "equal").length} differences`, hunks: hunks.slice(0, 400) };
+    return { kind: "json", summary: `${hunks.filter((h) => h.type !== "equal").length} khác biệt`, hunks: hunks.slice(0, 400) };
   },
 };
 
@@ -87,7 +87,7 @@ const spreadsheetAdapter: CompareAdapter = {
         hunks.push({ type: "change", left: l, right: r, path: `row ${i + 1}` });
       }
     }
-    return { kind: "spreadsheet", summary: `${changed} rows differ`, hunks: hunks.slice(0, 200), metrics: { changed } };
+    return { kind: "spreadsheet", summary: `${changed} dòng khác nhau`, hunks: hunks.slice(0, 200), metrics: { changed } };
   },
 };
 
@@ -104,7 +104,7 @@ const binaryAdapter: CompareAdapter = {
     const sameHash = a.sha256 && b.sha256 && a.sha256 === b.sha256;
     return {
       kind: "binary",
-      summary: sameHash ? "Identical SHA-256" : "Different files",
+      summary: sameHash ? "Mã SHA-256 giống nhau" : "Hai tệp khác nhau",
       hunks: [
         { type: sameHash ? "equal" : "change", left: a.sha256 ?? "unhashed", right: b.sha256 ?? "unhashed", path: "sha256" },
         { type: a.size === b.size ? "equal" : "change", left: String(a.size), right: String(b.size), path: "size" },

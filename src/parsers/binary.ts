@@ -25,7 +25,7 @@ export async function parseBinary(file: FileRecord, ctx: ParserContext): Promise
 export const binaryParser: FileParser = {
   id: "binary",
   version: "1.0.0",
-  label: "Binary",
+  label: "Nhị phân",
   supports: (f) => f.kind === "binary" || f.kind === "unknown",
   parse: parseBinary,
 };

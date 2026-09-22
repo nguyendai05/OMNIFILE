@@ -2,17 +2,17 @@ import type { FileAction, TextDocument } from "@/core/types";
 import { OmniError } from "@/core/errors";
 
 function asText(doc: unknown): string {
-  if (!doc || typeof doc !== "object" || !("kind" in doc)) throw new OmniError("ParserFailure", "Text document is not ready");
+  if (!doc || typeof doc !== "object" || !("kind" in doc)) throw new OmniError("ParserFailure", "Văn bản chưa sẵn sàng");
   const d = doc as TextDocument;
   if (d.kind === "text" || d.kind === "markdown" || d.kind === "code" || d.kind === "html") return d.text;
-  throw new OmniError("ParserFailure", "Not a text document");
+  throw new OmniError("ParserFailure", "Không phải tài liệu văn bản");
 }
 
 export const cleanTextAction: FileAction = {
   id: "text.clean",
-  title: "Clean text",
-  description: "Normalize whitespace, strip control characters, collapse blank lines",
-  category: "Text",
+  title: "Làm sạch văn bản",
+  description: "Chuẩn hóa khoảng trắng, bỏ ký tự điều khiển và gộp dòng trống",
+  category: "Văn bản",
   accepts: ["text", "markdown", "code"],
   produces: ["text"],
   execution: "local",
@@ -48,9 +48,9 @@ export const cleanTextAction: FileAction = {
 
 export const toMarkdownAction: FileAction = {
   id: "text.to-markdown",
-  title: "Convert to Markdown",
-  description: "Wrap cleaned text as a Markdown document",
-  category: "Text",
+  title: "Chuyển sang Markdown",
+  description: "Chuyển văn bản đã làm sạch thành tài liệu Markdown",
+  category: "Văn bản",
   accepts: ["text", "markdown"],
   produces: ["markdown"],
   execution: "local",
@@ -86,8 +86,8 @@ export const toMarkdownAction: FileAction = {
 
 export const formatJsonAction: FileAction = {
   id: "json.format",
-  title: "Format JSON",
-  description: "Pretty-print valid JSON",
+  title: "Định dạng JSON",
+  description: "Định dạng JSON hợp lệ cho dễ đọc",
   category: "Data",
   accepts: ["json"],
   produces: ["json"],
@@ -97,7 +97,7 @@ export const formatJsonAction: FileAction = {
   async execute(ctx) {
     const file = ctx.files[0]!;
     const doc = ctx.getDocument(file.id);
-    if (doc?.kind !== "json") throw new OmniError("ParserFailure", "Not JSON");
+    if (doc?.kind !== "json") throw new OmniError("ParserFailure", "Không phải JSON");
     const text = JSON.stringify(doc.parsed, null, 2);
     return {
       artifacts: [
@@ -114,8 +114,8 @@ export const formatJsonAction: FileAction = {
 
 export const minifyJsonAction: FileAction = {
   id: "json.minify",
-  title: "Minify JSON",
-  description: "Compact valid JSON",
+  title: "Thu gọn JSON",
+  description: "Thu gọn JSON hợp lệ",
   category: "Data",
   accepts: ["json"],
   produces: ["json"],
@@ -125,7 +125,7 @@ export const minifyJsonAction: FileAction = {
   async execute(ctx) {
     const file = ctx.files[0]!;
     const doc = ctx.getDocument(file.id);
-    if (doc?.kind !== "json") throw new OmniError("ParserFailure", "Not JSON");
+    if (doc?.kind !== "json") throw new OmniError("ParserFailure", "Không phải JSON");
     const text = JSON.stringify(doc.parsed);
     return {
       artifacts: [

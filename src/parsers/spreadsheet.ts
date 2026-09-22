@@ -26,7 +26,7 @@ export const csvParser: FileParser = {
       text = new TextDecoder("utf-8").decode(bytes);
     }
     if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
-    ctx.onProgress?.({ message: "Parsing delimited text" });
+    ctx.onProgress?.({ message: "Đang đọc dữ liệu phân tách" });
     const delim = file.extension === "tsv" ? "\t" : "";
     const aoa = parseCsvText(text, delim) as CellValue[][];
     const sheet = sheetFromAoa(file.name.replace(/\.[^.]+$/, "") || "Sheet1", aoa);
@@ -48,7 +48,7 @@ export const xlsxParser: FileParser = {
     try {
       wb = XLSX.read(buf, { type: "array", cellDates: true, raw: false });
     } catch (err) {
-      throw new OmniError("CorruptedFile", "Could not read spreadsheet", { cause: err });
+      throw new OmniError("CorruptedFile", "Không thể đọc bảng tính", { cause: err });
     }
     const sheets: SheetTab[] = [];
     for (const name of wb.SheetNames) {

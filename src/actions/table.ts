@@ -15,13 +15,13 @@ function asTable(doc: ReturnType<FileAction["canRun"]> extends boolean ? unknown
   if (d?.kind === "table") return d;
   if (d?.kind === "spreadsheet") {
     const sheet = d.sheets[d.activeSheet] ?? d.sheets[0];
-    if (!sheet) throw new OmniError("ParserFailure", "Spreadsheet has no sheets");
+    if (!sheet) throw new OmniError("ParserFailure", "Bảng tính không có trang nào");
     return { kind: "table", fileId: d.fileId, title: sheet.name, columns: sheet.columns, rows: sheet.rows };
   }
   if (d && (d as { kind?: string }).kind === "json") {
-    throw new OmniError("ParserFailure", "Not a table");
+    throw new OmniError("ParserFailure", "Không phải dữ liệu bảng");
   }
-  throw new OmniError("ParserFailure", "Table document is not ready");
+  throw new OmniError("ParserFailure", "Dữ liệu bảng chưa sẵn sàng");
 }
 
 function tableArtifact(name: string, table: TableDocument, warnings?: string[]) {
@@ -43,9 +43,9 @@ function tableArtifact(name: string, table: TableDocument, warnings?: string[]) 
 
 export const removeEmptyRowsAction: FileAction = {
   id: "table.remove-empty-rows",
-  title: "Remove empty rows",
-  description: "Drop rows where every cell is empty",
-  category: "Table",
+  title: "Xóa dòng trống",
+  description: "Xóa các dòng có tất cả ô trống",
+  category: "Bảng",
   accepts: ["table", "spreadsheet"],
   produces: ["table"],
   execution: "local",
@@ -66,9 +66,9 @@ export const removeEmptyRowsAction: FileAction = {
 
 export const normalizeHeadersAction: FileAction = {
   id: "table.normalize-headers",
-  title: "Normalize headers",
-  description: "Trim, title-case, and de-duplicate column names",
-  category: "Table",
+  title: "Chuẩn hóa tiêu đề cột",
+  description: "Bỏ khoảng trắng thừa, chuẩn hóa chữ hoa và tên cột trùng",
+  category: "Bảng",
   accepts: ["table", "spreadsheet"],
   produces: ["table"],
   execution: "local",
@@ -89,9 +89,9 @@ export const normalizeHeadersAction: FileAction = {
 
 export const dropDuplicatesAction: FileAction = {
   id: "table.drop-duplicates",
-  title: "Remove duplicate rows",
-  description: "Keep the first occurrence of each identical row",
-  category: "Table",
+  title: "Xóa dòng trùng lặp",
+  description: "Giữ lại dòng đầu tiên trong các dòng trùng nhau",
+  category: "Bảng",
   accepts: ["table", "spreadsheet"],
   produces: ["table"],
   execution: "local",
@@ -104,16 +104,16 @@ export const dropDuplicatesAction: FileAction = {
     return tableArtifact(
       file.name.replace(/\.[^.]+$/, "") + "-deduped.table.json",
       { ...table, fileId: "", rows, title: `${table.title} (deduped)` },
-      removed ? [`Removed ${removed} duplicate row${removed === 1 ? "" : "s"}`] : ["No duplicates found"],
+      removed ? [`Removed ${removed} duplicate row${removed === 1 ? "" : "s"}`] : ["Không tìm thấy dòng trùng"],
     );
   },
 };
 
 export const fillMissingAction: FileAction = {
   id: "table.fill-missing",
-  title: "Fill missing values",
-  description: "Forward-fill empty cells from the previous row",
-  category: "Table",
+  title: "Điền giá trị còn thiếu",
+  description: "Điền ô trống bằng giá trị của dòng trước",
+  category: "Bảng",
   accepts: ["table", "spreadsheet"],
   produces: ["table"],
   execution: "local",
@@ -134,9 +134,9 @@ export const fillMissingAction: FileAction = {
 
 export const profileAction: FileAction = {
   id: "table.profile",
-  title: "Profile columns",
-  description: "Emit a data-quality profile as JSON",
-  category: "Table",
+  title: "Thống kê cột",
+  description: "Xuất thống kê chất lượng dữ liệu dạng JSON",
+  category: "Bảng",
   accepts: ["table", "spreadsheet"],
   produces: ["json"],
   execution: "local",
@@ -162,9 +162,9 @@ export const profileAction: FileAction = {
 
 export const exportCsvAction: FileAction = {
   id: "table.export-csv",
-  title: "Export CSV",
-  description: "Write the table as CSV",
-  category: "Export",
+  title: "Xuất CSV",
+  description: "Xuất bảng thành CSV",
+  category: "Xuất tệp",
   accepts: ["table", "spreadsheet"],
   produces: ["spreadsheet"],
   execution: "local",
@@ -189,9 +189,9 @@ export const exportCsvAction: FileAction = {
 
 export const exportXlsxAction: FileAction = {
   id: "table.export-xlsx",
-  title: "Export Excel",
-  description: "Write the table as XLSX",
-  category: "Export",
+  title: "Xuất Excel",
+  description: "Xuất bảng thành XLSX",
+  category: "Xuất tệp",
   accepts: ["table", "spreadsheet"],
   produces: ["spreadsheet"],
   execution: "local",
@@ -223,9 +223,9 @@ export const exportXlsxAction: FileAction = {
 
 export const jsonToTableAction: FileAction = {
   id: "table.from-json",
-  title: "JSON to table",
-  description: "If the JSON is an array of objects, flatten it into a table",
-  category: "Table",
+  title: "Chuyển JSON thành bảng",
+  description: "Chuyển mảng đối tượng JSON thành bảng",
+  category: "Bảng",
   accepts: ["json"],
   produces: ["table"],
   execution: "local",
@@ -237,7 +237,7 @@ export const jsonToTableAction: FileAction = {
   async execute(ctx) {
     const file = ctx.files[0]!;
     const doc = ctx.getDocument(file.id);
-    if (doc?.kind !== "json" || !Array.isArray(doc.parsed)) throw new OmniError("ParserFailure", "JSON is not a table");
+    if (doc?.kind !== "json" || !Array.isArray(doc.parsed)) throw new OmniError("ParserFailure", "JSON không có dạng bảng");
     const rowsObj = doc.parsed as Record<string, unknown>[];
     const keys = [...new Set(rowsObj.flatMap((r) => Object.keys(r)))];
     const columns: TableColumn[] = keys.map((k, i) => ({ id: `c${i}`, name: k, type: "text" }));
@@ -249,9 +249,9 @@ export const jsonToTableAction: FileAction = {
 
 export const mergeTablesAction: FileAction = {
   id: "table.merge",
-  title: "Merge tables",
-  description: "Stack tables that share a compatible schema",
-  category: "Table",
+  title: "Gộp bảng",
+  description: "Nối các bảng có cấu trúc tương thích",
+  category: "Bảng",
   accepts: ["table", "spreadsheet"],
   produces: ["table"],
   execution: "local",
@@ -262,7 +262,7 @@ export const mergeTablesAction: FileAction = {
     const schema = tables[0]!.columns.map((c) => c.name.toLowerCase()).join("|");
     for (const t of tables) {
       if (t.columns.map((c) => c.name.toLowerCase()).join("|") !== schema) {
-        throw new OmniError("InvalidConnection", "Column names do not match — merge aborted");
+        throw new OmniError("InvalidConnection", "Tên cột không khớp — đã hủy gộp");
       }
     }
     const rows = tables.flatMap((t) => t.rows);

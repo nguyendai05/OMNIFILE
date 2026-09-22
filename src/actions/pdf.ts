@@ -5,14 +5,14 @@ import { aoaToTable } from "@/core/table-ops";
 function asPdf(doc: ReturnType<FileAction["execute"]> extends Promise<infer _> ? unknown : unknown, fileId: string): PdfDocument {
   void fileId;
   const d = doc as PdfDocument | undefined;
-  if (!d || d.kind !== "pdf") throw new OmniError("ParserFailure", "PDF document is not ready");
+  if (!d || d.kind !== "pdf") throw new OmniError("ParserFailure", "Tài liệu PDF chưa sẵn sàng");
   return d;
 }
 
 export const extractTextAction: FileAction = {
   id: "pdf.extract-text",
-  title: "Extract text",
-  description: "Pull a plain-text document from the PDF content stream",
+  title: "Trích xuất văn bản",
+  description: "Trích xuất văn bản thuần từ PDF",
   category: "PDF",
   accepts: ["pdf"],
   produces: ["text"],
@@ -46,8 +46,8 @@ export const extractTextAction: FileAction = {
 
 export const extractTablesAction: FileAction = {
   id: "pdf.extract-tables",
-  title: "Extract tables",
-  description: "Detect grid-like text regions and emit table documents",
+  title: "Trích xuất bảng",
+  description: "Nhận diện vùng văn bản dạng lưới và tạo bảng",
   category: "PDF",
   accepts: ["pdf"],
   produces: ["table"],
@@ -62,7 +62,7 @@ export const extractTablesAction: FileAction = {
     const doc = asPdf(ctx.getDocument(file.id), file.id);
     const wanted = ctx.config.tableIndex as number | undefined;
     const tables = doc.pages.flatMap((p) => p.tables).filter((t) => wanted === undefined || t.index === wanted);
-    if (!tables.length) throw new OmniError("ParserFailure", "No tables detected in this PDF");
+    if (!tables.length) throw new OmniError("ParserFailure", "Không tìm thấy bảng trong PDF này");
     const artifacts = tables.map((t, i) => {
       const aoa = [t.headers, ...t.rows];
       const { columns, rows } = aoaToTable(aoa, `Table ${i + 1}`);
@@ -88,8 +88,8 @@ export const extractTablesAction: FileAction = {
 
 export const splitPdfAction: FileAction = {
   id: "pdf.split",
-  title: "Split pages",
-  description: "Emit one PDF per page",
+  title: "Tách trang",
+  description: "Tạo một tệp PDF cho mỗi trang",
   category: "PDF",
   accepts: ["pdf"],
   produces: ["pdf"],
@@ -104,7 +104,7 @@ export const splitPdfAction: FileAction = {
     const artifacts = [];
     const max = Math.min(src.getPageCount(), 40);
     for (let i = 0; i < max; i++) {
-      ctx.onProgress?.({ ratio: i / max, message: `Page ${i + 1}` });
+      ctx.onProgress?.({ ratio: i / max, message: `Trang ${i + 1}` });
       const out = await PDFDocument.create();
       const [page] = await out.copyPages(src, [i]);
       out.addPage(page);
@@ -116,14 +116,14 @@ export const splitPdfAction: FileAction = {
         kind: "pdf" as const,
       });
     }
-    return { artifacts, warnings: src.getPageCount() > 40 ? ["Split is capped at 40 pages in this build"] : undefined };
+    return { artifacts, warnings: src.getPageCount() > 40 ? ["Mỗi lần chỉ tách tối đa 40 trang"] : undefined };
   },
 };
 
 export const mergePdfAction: FileAction = {
   id: "pdf.merge",
-  title: "Merge PDFs",
-  description: "Concatenate selected PDFs in selection order",
+  title: "Gộp PDF",
+  description: "Gộp các PDF theo thứ tự chọn",
   category: "PDF",
   accepts: ["pdf"],
   produces: ["pdf"],
@@ -154,8 +154,8 @@ export const mergePdfAction: FileAction = {
 
 export const extractPdfImagesAction: FileAction = {
   id: "pdf.export-pages",
-  title: "Export page images",
-  description: "Rasterize PDF pages to PNG",
+  title: "Xuất trang thành ảnh",
+  description: "Chuyển trang PDF thành ảnh PNG",
   category: "PDF",
   accepts: ["pdf"],
   produces: ["image"],
@@ -172,10 +172,10 @@ export const extractPdfImagesAction: FileAction = {
     const max = Math.min(doc.pageCount, 12);
     const artifacts = [];
     for (let i = 0; i < max; i++) {
-      ctx.onProgress?.({ ratio: i / max, message: `Rasterizing page ${i + 1}` });
+      ctx.onProgress?.({ ratio: i / max, message: `Đang tạo ảnh trang ${i + 1}` });
       const canvas = await renderPdfPage(blob, i, scale, ctx.signal);
       const png = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("PNG encode failed"))), "image/png"),
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Không thể mã hóa PNG"))), "image/png"),
       );
       artifacts.push({
         name: `${file.name.replace(/\.pdf$/i, "")}-p${i + 1}.png`,
@@ -184,6 +184,6 @@ export const extractPdfImagesAction: FileAction = {
         kind: "image" as const,
       });
     }
-    return { artifacts, warnings: doc.pageCount > 12 ? ["Rasterize is capped at 12 pages"] : undefined };
+    return { artifacts, warnings: doc.pageCount > 12 ? ["Mỗi lần chỉ xuất ảnh tối đa 12 trang"] : undefined };
   },
 };

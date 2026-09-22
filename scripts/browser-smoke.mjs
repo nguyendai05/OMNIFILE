@@ -17,8 +17,8 @@ try {
     page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
     const response = await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => document.body.innerText.includes("OMNIFILE"));
-    await page.getByRole("button", { name: "Open", exact: true }).waitFor({ timeout: 60000 });
-    await page.waitForFunction(() => !document.body.innerText.includes("Parsing"), undefined, { timeout: 60000 });
+    await page.getByRole("button", { name: "Mở", exact: true }).waitFor({ timeout: 60000 });
+    await page.waitForFunction(() => !document.body.innerText.includes("Đang đọc tệp"), undefined, { timeout: 60000 });
     // A visible shell can still hide an unrendered PDF canvas (default 300 × 150).
     await page.waitForFunction(() => {
       const canvas = document.querySelector("canvas");

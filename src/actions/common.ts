@@ -3,8 +3,8 @@ import { sha256Blob } from "@/core/hash";
 
 export const hashAction: FileAction = {
   id: "common.hash",
-  title: "Compute SHA-256",
-  description: "Hash the file locally and store the digest on the record",
+  title: "Tính mã băm SHA-256",
+  description: "Tính và lưu mã băm của tệp ngay trên thiết bị",
   category: "Inspect",
   accepts: ["pdf", "spreadsheet", "table", "text", "markdown", "code", "html", "image", "svg", "archive", "json", "xml", "yaml", "binary", "audio", "video", "presentation", "docx", "unknown"],
   produces: ["json"],
@@ -34,8 +34,8 @@ export const hashAction: FileAction = {
 
 export const metadataAction: FileAction = {
   id: "common.metadata",
-  title: "Export metadata",
-  description: "Write file metadata as JSON",
+  title: "Xuất thông tin tệp",
+  description: "Xuất thông tin tệp dưới dạng JSON",
   category: "Inspect",
   accepts: ["pdf", "spreadsheet", "table", "text", "markdown", "code", "html", "image", "svg", "archive", "json", "xml", "yaml", "binary", "audio", "video", "presentation", "docx", "unknown"],
   produces: ["json"],

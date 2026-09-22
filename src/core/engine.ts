@@ -195,7 +195,7 @@ export async function importBlobs(
   }
   if (source.type === "import") {
     pushHistory({
-      label: created.length === 1 ? `Import ${created[0]!.name}` : `Import ${created.length} files`,
+      label: created.length === 1 ? `Nhập ${created[0]!.name}` : `Nhập ${created.length} tệp`,
       kind: "import",
       inputIds: [],
       outputIds: created.map((f) => f.id),
@@ -232,11 +232,11 @@ export async function parseFile(id: string) {
   if (existing) return existing;
   const run = (async () => {
     const release = await parseSemaphore.acquire();
-    const job = createJob({ title: `Parse ${workspaceStore.getState().files[id]?.name ?? id}`, inputIds: [id] });
+    const job = createJob({ title: `Đọc ${workspaceStore.getState().files[id]?.name ?? id}`, inputIds: [id] });
     setJobStatus(job.id, "running");
     try {
       const file = workspaceStore.getState().files[id];
-      if (!file) throw new OmniError("NotFound", "File disappeared");
+      if (!file) throw new OmniError("NotFound", "Không tìm thấy tệp");
       patchFile(id, { parseStatus: "parsing" });
       const parser = findParser(file);
       if (!parser) {
@@ -392,12 +392,12 @@ export async function runAction(
   opts: { open?: boolean } = {},
 ): Promise<FileRecord[]> {
   const action = actionRegistry.get(actionId);
-  if (!action) throw new OmniError("ActionUnavailable", `Unknown action ${actionId}`);
+  if (!action) throw new OmniError("ActionUnavailable", `Không tìm thấy thao tác ${actionId}`);
   const state = workspaceStore.getState();
   const files = fileIds.map((id) => state.files[id]).filter(Boolean) as FileRecord[];
-  if (!files.length) throw new OmniError("NotFound", "No files selected");
+  if (!files.length) throw new OmniError("NotFound", "Chưa chọn tệp");
   if (!action.canRun({ files, documents: files.map((f) => getDocument(f.id)) })) {
-    throw new OmniError("ActionUnavailable", `${action.title} cannot run on the current selection`);
+    throw new OmniError("ActionUnavailable", `${action.title} không thể chạy với các tệp đã chọn`);
   }
   const controller = new AbortController();
   const job = createJob({
@@ -415,7 +415,7 @@ export async function runAction(
       files,
       getBlob: async (id) => {
         const f = workspaceStore.getState().files[id];
-        if (!f) throw new OmniError("NotFound", "Missing file");
+        if (!f) throw new OmniError("NotFound", "Không tìm thấy tệp");
         return getBlob(f.storageRef);
       },
       getDocument: (id) => getDocument(id),
@@ -481,14 +481,14 @@ export function cancelJob(id: string) {
 
 export async function exportWith(exporterId: string, fileId: string, config: Record<string, unknown> = {}) {
   const exporter = exporterRegistry.get(exporterId);
-  if (!exporter) throw new OmniError("ActionUnavailable", "Exporter unavailable");
+  if (!exporter) throw new OmniError("ActionUnavailable", "Công cụ xuất không khả dụng");
   const file = workspaceStore.getState().files[fileId];
-  if (!file) throw new OmniError("NotFound", "File missing");
+  if (!file) throw new OmniError("NotFound", "Không tìm thấy tệp");
   const artifact = await exporter.export({
     files: [file],
     getBlob: async (id) => {
       const f = workspaceStore.getState().files[id];
-      if (!f) throw new OmniError("NotFound", "Missing file");
+      if (!f) throw new OmniError("NotFound", "Không tìm thấy tệp");
       return getBlob(f.storageRef);
     },
     getDocument: (id) => getDocument(id),
@@ -566,7 +566,7 @@ export async function renameFile(id: string, name: string) {
   if (!file) return;
   const next = name.trim();
   if (!next || next === file.name) return;
-  pushHistory({ label: `Rename ${file.name}`, kind: "rename", inputIds: [id], outputIds: [] });
+  pushHistory({ label: `Đổi tên ${file.name}`, kind: "rename", inputIds: [id], outputIds: [] });
   patchFile(id, { name: next, extension: extname(next) });
   workspaceStore.setState((s) => ({
     tabs: s.tabs.map((t) => (t.fileId === id ? { ...t, title: next } : t)),
@@ -575,7 +575,7 @@ export async function renameFile(id: string, name: string) {
 
 export async function deleteFiles(ids: string[]) {
   const s = workspaceStore.getState();
-  pushHistory({ label: ids.length === 1 ? `Delete ${s.files[ids[0]!]?.name}` : `Delete ${ids.length} files`, kind: "delete", inputIds: ids, outputIds: [] });
+  pushHistory({ label: ids.length === 1 ? `Xóa ${s.files[ids[0]!]?.name}` : `Xóa ${ids.length} tệp`, kind: "delete", inputIds: ids, outputIds: [] });
   workspaceStore.setState((st) => {
     const files = { ...st.files };
     for (const id of ids) delete files[id];
@@ -675,8 +675,8 @@ export function refreshSuggestions() {
       if (tableCount > 0) {
         suggestions.push({
           id: `sug-tables-${f.id}`,
-          title: `This PDF contains ${tableCount} table${tableCount === 1 ? "" : "s"}`,
-          detail: `Extract tables from ${f.name}`,
+          title: `PDF này có ${tableCount} bảng`,
+          detail: `Trích xuất bảng từ ${f.name}`,
           actionId: "pdf.extract-tables",
           fileIds: [f.id],
           grounded: true,
@@ -690,8 +690,8 @@ export function refreshSuggestions() {
       if (empty) {
         suggestions.push({
           id: `sug-empty-${f.id}`,
-          title: `${empty} empty rows in ${f.name}`,
-          detail: "Remove empty rows",
+          title: `${empty} dòng trống trong ${f.name}`,
+          detail: "Xóa dòng trống",
           actionId: "table.remove-empty-rows",
           fileIds: [f.id],
           grounded: true,
@@ -703,7 +703,7 @@ export function refreshSuggestions() {
       suggestions.push({
         id: `sug-ocr-${f.id}`,
         title: `OCR ${f.name}`,
-        detail: "Extract text locally with Tesseract",
+        detail: "Trích xuất văn bản cục bộ bằng Tesseract",
         actionId: "image.ocr",
         fileIds: [f.id],
         grounded: true,
@@ -712,8 +712,8 @@ export function refreshSuggestions() {
     if (f.kind === "pdf") {
       suggestions.push({
         id: `sug-recipe-pdf-${f.id}`,
-        title: `PDF → Excel for ${f.name}`,
-        detail: "Extract · clean · normalize · XLSX",
+        title: `PDF → Excel cho ${f.name}`,
+        detail: "Trích xuất · làm sạch · chuẩn hóa · XLSX",
         actionId: "recipe:pdf-to-excel",
         fileIds: [f.id],
         grounded: true,
@@ -722,8 +722,8 @@ export function refreshSuggestions() {
     if (f.kind === "spreadsheet" || f.kind === "table") {
       suggestions.push({
         id: `sug-recipe-csv-${f.id}`,
-        title: `Clean ${f.name} → Excel`,
-        detail: "Drop duplicates · fill missing · XLSX",
+        title: `Làm sạch ${f.name} → Excel`,
+        detail: "Xóa dòng trùng · điền ô trống · XLSX",
         actionId: "recipe:csv-clean-xlsx",
         fileIds: [f.id],
         grounded: true,
@@ -734,8 +734,8 @@ export function refreshSuggestions() {
   if (images.length >= 3) {
     suggestions.push({
       id: "sug-batch-images",
-      title: `${images.length} images in workspace`,
-      detail: "Batch-resize or convert the set",
+      title: `${images.length} ảnh trong không gian làm việc`,
+      detail: "Đổi kích thước hoặc chuyển đổi hàng loạt",
       actionId: "image.resize",
       fileIds: images.map((f) => f.id),
       grounded: true,
@@ -752,8 +752,8 @@ export function refreshSuggestions() {
     if (schemas[0] && schemas.every((s) => s === schemas[0])) {
       suggestions.push({
         id: "sug-merge",
-        title: `${csvs.length} tables share the same columns`,
-        detail: "Merge into one sheet",
+        title: `${csvs.length} bảng có cùng các cột`,
+        detail: "Gộp vào một trang tính",
         actionId: "table.merge",
         fileIds: csvs.map((f) => f.id),
         grounded: true,
@@ -771,8 +771,8 @@ export function refreshSuggestions() {
     if (ids.length > 1) {
       suggestions.push({
         id: `sug-dup-${hash.slice(0, 8)}`,
-        title: `${ids.length} exact duplicate files`,
-        detail: "Same SHA-256 — inspect, do not auto-delete",
+        title: `${ids.length} tệp trùng lặp hoàn toàn`,
+        detail: "Cùng mã SHA-256 — kiểm tra trước khi xóa",
         fileIds: ids,
         grounded: true,
       });
@@ -781,7 +781,7 @@ export function refreshSuggestions() {
   workspaceStore.setState({ suggestions: suggestions.slice(0, 12) });
 }
 
-export async function createPipeline(name = "Untitled pipeline"): Promise<Pipeline> {
+export async function createPipeline(name = "Quy trình chưa đặt tên"): Promise<Pipeline> {
   const pipeline: Pipeline = {
     id: makeId("pl"),
     name,
@@ -807,7 +807,7 @@ export function savePipeline(pipeline: Pipeline) {
 
 export async function runPipeline(pipelineId: string) {
   const pipeline = workspaceStore.getState().pipelines[pipelineId];
-  if (!pipeline) throw new OmniError("NotFound", "Pipeline missing");
+  if (!pipeline) throw new OmniError("NotFound", "Không tìm thấy quy trình");
   const byId = new Map(pipeline.nodes.map((n) => [n.id, n]));
   const incoming = new Map<string, string[]>();
   for (const n of pipeline.nodes) incoming.set(n.id, []);
@@ -830,7 +830,7 @@ export async function runPipeline(pipelineId: string) {
     }
   }
   if (order.length !== pipeline.nodes.length) {
-    throw new OmniError("InvalidConnection", "Pipeline has a cycle");
+    throw new OmniError("InvalidConnection", "Quy trình có vòng lặp");
   }
   for (const nodeId of order) {
     const node = byId.get(nodeId)!;
@@ -838,14 +838,14 @@ export async function runPipeline(pipelineId: string) {
     const started = Date.now();
     try {
       if (node.data.kind === "input") {
-        if (!node.data.fileId) throw new OmniError("NotFound", "Input node has no file");
+        if (!node.data.fileId) throw new OmniError("NotFound", "Bước đầu vào chưa có tệp");
         outputs.set(nodeId, [node.data.fileId]);
         updateNodeStatus(pipelineId, nodeId, "success", { outputFileIds: [node.data.fileId], elapsedMs: Date.now() - started });
         continue;
       }
       const srcIds = (incoming.get(nodeId) ?? []).flatMap((s) => outputs.get(s) ?? []);
       if (node.data.kind === "action") {
-        if (!node.data.actionId) throw new OmniError("ActionUnavailable", "Node missing action");
+        if (!node.data.actionId) throw new OmniError("ActionUnavailable", "Bước chưa có thao tác");
         const produced = await runAction(node.data.actionId, srcIds, node.data.config);
         const ids = produced.map((f) => f.id);
         outputs.set(nodeId, ids);
@@ -882,7 +882,7 @@ function updateNodeStatus(
 
 export async function blobUrl(fileId: string): Promise<string> {
   const file = workspaceStore.getState().files[fileId];
-  if (!file) throw new OmniError("NotFound", "File missing");
+  if (!file) throw new OmniError("NotFound", "Không tìm thấy tệp");
   const blob = await getBlob(file.storageRef);
   return objectUrlFor(file.storageRef, blob);
 }
@@ -928,7 +928,7 @@ export async function retryJob(jobId: string) {
 
 async function waitParsed(id: string) {
   const file = workspaceStore.getState().files[id];
-  if (!file) throw new OmniError("NotFound", "File missing");
+  if (!file) throw new OmniError("NotFound", "Không tìm thấy tệp");
   if (file.parseStatus === "ready" && getDocument(id)) return;
   await parseFile(id);
 }
@@ -953,8 +953,8 @@ async function runRecipeChain(recipe: Recipe, fileIds: string[]): Promise<FileRe
 
 export async function runRecipe(recipeId: string, fileIds: string[]): Promise<FileRecord[]> {
   const recipe = getRecipe(recipeId);
-  if (!recipe) throw new OmniError("ActionUnavailable", `Unknown recipe ${recipeId}`);
-  if (!fileIds.length) throw new OmniError("NotFound", "No files selected for recipe");
+  if (!recipe) throw new OmniError("ActionUnavailable", `Không tìm thấy quy trình mẫu ${recipeId}`);
+  if (!fileIds.length) throw new OmniError("NotFound", "Chưa chọn tệp cho quy trình mẫu");
   const last =
     recipe.mode === "each"
       ? (await Promise.all(fileIds.map((id) => runRecipeChain(recipe, [id])))).flat()
@@ -971,7 +971,7 @@ export function recipesForFiles(fileIds: string[]) {
 
 export async function createPipelineFromRecipe(recipeId: string, fileId?: string): Promise<Pipeline> {
   const recipe = getRecipe(recipeId);
-  if (!recipe) throw new OmniError("ActionUnavailable", `Unknown recipe ${recipeId}`);
+  if (!recipe) throw new OmniError("ActionUnavailable", `Không tìm thấy quy trình mẫu ${recipeId}`);
   const file = fileId ? workspaceStore.getState().files[fileId] : undefined;
   const nodes: Pipeline["nodes"] = [];
   const edges: Pipeline["edges"] = [];
@@ -1036,7 +1036,7 @@ export async function importFromDirectoryPicker(): Promise<FileRecord[]> {
   if (!w.showDirectoryPicker) {
     throw new OmniError(
       "PermissionDenied",
-      "This browser has no folder picker. Use Open files instead.",
+      "Trình duyệt không hỗ trợ chọn thư mục. Hãy dùng nút Mở tệp.",
     );
   }
   const dir = await w.showDirectoryPicker();
@@ -1056,7 +1056,7 @@ export async function importFromDirectoryPicker(): Promise<FileRecord[]> {
     }
   }
   await walk(dir, "", 0);
-  if (!files.length) throw new OmniError("NotFound", "Folder was empty");
+  if (!files.length) throw new OmniError("NotFound", "Thư mục trống");
   return importBrowserFiles(files, "fs-access");
 }
 

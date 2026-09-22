@@ -1,5 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { normalizeSearch } from "../lib/locale.ts";
+
+test("Vietnamese search matches accented, unaccented and decomposed text", () => {
+  const labels = ["Trích xuất bảng", "Đổi kích thước ảnh"];
+  assert.equal(normalizeSearch("ĐƯỜNG dẫn"), "duong dan");
+  assert.equal(scoreSearch("trich xuat", labels), scoreSearch("trích xuất", labels));
+  assert.ok(scoreSearch("doi kich thuoc", labels) > 0);
+  assert.equal(scoreSearch("trích xuất".normalize("NFD"), labels), scoreSearch("trích xuất", labels));
+  assert.equal(labels[0], "Trích xuất bảng");
+});
 import {
   aoaToTable,
   canConnect,

@@ -4,9 +4,9 @@ import { isUnsafePath, MAX_UNCOMPRESSED } from "@/parsers/archive";
 
 export const extractArchiveAction: FileAction = {
   id: "archive.extract",
-  title: "Extract all",
-  description: "Unpack safe archive members into the workspace",
-  category: "Archive",
+  title: "Giải nén tất cả",
+  description: "Giải nén các tệp an toàn vào không gian làm việc",
+  category: "Tệp nén",
   accepts: ["archive"],
   produces: ["unknown"],
   execution: "local",
@@ -15,9 +15,9 @@ export const extractArchiveAction: FileAction = {
   async execute(ctx) {
     const file = ctx.files[0]!;
     const doc = ctx.getDocument(file.id) as ArchiveDocument | undefined;
-    if (!doc || doc.kind !== "archive") throw new OmniError("ParserFailure", "Archive not parsed");
+    if (!doc || doc.kind !== "archive") throw new OmniError("ParserFailure", "Tệp nén chưa được đọc");
     if (doc.totalUncompressed > MAX_UNCOMPRESSED) {
-      throw new OmniError("ResourceLimit", "Archive exceeds the uncompressed size safety limit");
+      throw new OmniError("ResourceLimit", "Dung lượng sau giải nén vượt giới hạn an toàn");
     }
     const JSZip = (await import("jszip")).default;
     const zip = await JSZip.loadAsync(await ctx.getBlob(file.id));
@@ -31,7 +31,7 @@ export const extractArchiveAction: FileAction = {
       if (!z) continue;
       const blob = await z.async("blob");
       extracted += blob.size;
-      if (extracted > MAX_UNCOMPRESSED) throw new OmniError("ResourceLimit", "Extraction aborted — size limit");
+      if (extracted > MAX_UNCOMPRESSED) throw new OmniError("ResourceLimit", "Đã dừng giải nén do vượt giới hạn dung lượng");
       const base = entry.path.split("/").filter(Boolean).pop() ?? entry.path;
       artifacts.push({
         name: base,
@@ -42,10 +42,10 @@ export const extractArchiveAction: FileAction = {
       });
       if (artifacts.length >= 80) break;
     }
-    if (!artifacts.length) throw new OmniError("ParserFailure", "No safe files to extract");
+    if (!artifacts.length) throw new OmniError("ParserFailure", "Không có tệp an toàn để giải nén");
     return {
       artifacts,
-      warnings: artifacts.length >= 80 ? ["Extraction capped at 80 files"] : undefined,
+      warnings: artifacts.length >= 80 ? ["Mỗi lần chỉ giải nén tối đa 80 tệp"] : undefined,
     };
   },
 };

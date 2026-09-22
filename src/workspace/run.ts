@@ -14,7 +14,7 @@ export async function runActionUi(
       return await runRecipeUi(actionId.slice("recipe:".length), fileIds);
     }
     const out = await runAction(actionId, fileIds, config);
-    if (out[0]) toast.success(`Created ${out.map((o) => o.name).join(", ")}`);
+    if (out[0]) toast.success(`Đã tạo ${out.map((o) => o.name).join(", ")}`);
     return out;
   } catch (err) {
     toast.error(errorMessage(err));
@@ -24,10 +24,10 @@ export async function runActionUi(
 
 export async function runRecipeUi(recipeId: string, fileIds: string[]): Promise<FileRecord[]> {
   const recipe = getRecipe(recipeId);
-  toast.message(recipe ? `Running ${recipe.title}` : "Running recipe");
+  toast.message(recipe ? `Đang chạy ${recipe.title}` : "Đang chạy quy trình mẫu");
   try {
     const out = await runRecipe(recipeId, fileIds);
-    toast.success(out[0] ? `Finished · ${out.map((o) => o.name).join(", ")}` : "Recipe finished");
+    toast.success(out[0] ? `Hoàn tất · ${out.map((o) => o.name).join(", ")}` : "Đã hoàn tất quy trình mẫu");
     return out;
   } catch (err) {
     toast.error(errorMessage(err));
@@ -36,12 +36,12 @@ export async function runRecipeUi(recipeId: string, fileIds: string[]): Promise<
 }
 
 export async function runBatchUi(actionId: string, fileIds: string[]) {
-  toast.message(`Batch · ${fileIds.length} files`);
+  toast.message(`Xử lý hàng loạt · ${fileIds.length} tệp`);
   try {
     const results = await runBatch(actionId, fileIds);
     const failed = results.filter((r) => !r.ok).length;
-    if (failed) toast.error(`${failed} of ${results.length} failed — inspect Jobs`);
-    else toast.success(`Batch finished · ${results.length} files`);
+    if (failed) toast.error(`${failed}/${results.length} tác vụ thất bại — xem bảng Tác vụ`);
+    else toast.success(`Đã xử lý hàng loạt · ${results.length} tệp`);
     return results;
   } catch (err) {
     toast.error(errorMessage(err));

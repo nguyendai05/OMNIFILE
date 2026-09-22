@@ -30,7 +30,7 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <html lang="en" className="dark antialiased" data-theme="dark" suppressHydrationWarning>
+    <html lang="vi" className="dark antialiased" data-theme="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

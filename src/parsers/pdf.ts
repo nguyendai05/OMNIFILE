@@ -34,9 +34,9 @@ export const pdfParser: FileParser = {
     try {
       pdf = await pdfjsLib.getDocument({ data, disableAutoFetch: true, disableStream: false }).promise;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to open PDF";
+      const msg = err instanceof Error ? err.message : "Không thể mở PDF";
       if (/password|encrypt/i.test(msg)) {
-        throw new OmniError("PermissionDenied", "This PDF is encrypted and cannot be opened without a password");
+        throw new OmniError("PermissionDenied", "PDF được mã hóa và cần mật khẩu để mở");
       }
       throw new OmniError("CorruptedFile", msg, { cause: err });
     }
@@ -49,7 +49,7 @@ export const pdfParser: FileParser = {
     const texts: string[] = [];
     for (let i = 1; i <= pdf.numPages; i++) {
       throwIfAborted(ctx.signal);
-      ctx.onProgress?.({ ratio: (i - 1) / pdf.numPages, message: `Page ${i} / ${pdf.numPages}` });
+      ctx.onProgress?.({ ratio: (i - 1) / pdf.numPages, message: `Trang ${i} / ${pdf.numPages}` });
       const page = await pdf.getPage(i);
       const viewport = page.getViewport({ scale: 1 });
       const content = await page.getTextContent();
@@ -81,7 +81,7 @@ export const pdfParser: FileParser = {
       });
       texts.push(pages[pages.length - 1]!.text);
     }
-    ctx.onProgress?.({ ratio: 1, message: "Complete" });
+    ctx.onProgress?.({ ratio: 1, message: "Hoàn tất" });
     return {
       kind: "pdf",
       fileId: file.id,
@@ -106,7 +106,7 @@ export async function renderPdfPage(blob: Blob, pageIndex: number, scale: number
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new OmniError("ParserFailure", "Canvas unavailable");
+  if (!ctx) throw new OmniError("ParserFailure", "Không thể khởi tạo vùng vẽ");
   await page.render({ canvas, viewport }).promise;
   return canvas;
 }

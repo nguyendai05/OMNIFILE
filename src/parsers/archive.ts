@@ -33,7 +33,7 @@ export const zipParser: FileParser = {
     try {
       zip = await JSZip.loadAsync(ctx.blob);
     } catch (err) {
-      throw new OmniError("CorruptedFile", "Could not read archive", { cause: err });
+      throw new OmniError("CorruptedFile", "Không thể đọc tệp nén", { cause: err });
     }
     const entries: ArchiveEntry[] = [];
     let total = 0;
@@ -58,7 +58,7 @@ export const zipParser: FileParser = {
         reason: unsafe.reason,
       });
     }
-    if (total > MAX_UNCOMPRESSED) warnings.push("Uncompressed size exceeds safety limit");
+    if (total > MAX_UNCOMPRESSED) warnings.push("Dung lượng giải nén vượt giới hạn an toàn");
     const compressed = ctx.blob.size || 1;
     return {
       kind: "archive",
@@ -87,7 +87,7 @@ export const gzipParser: FileParser = {
       try {
         raw = fflate.gunzipSync(bytes);
       } catch (err) {
-        throw new OmniError("CorruptedFile", "GZIP decompress failed", { cause: err });
+        throw new OmniError("CorruptedFile", "Không thể giải nén GZIP", { cause: err });
       }
     }
     const entries: ArchiveEntry[] = [];

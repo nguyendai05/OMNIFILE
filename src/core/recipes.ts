@@ -21,7 +21,7 @@ export const RECIPES: Recipe[] = [
   {
     id: "pdf-to-excel",
     title: "PDF → Excel",
-    description: "Extract tables, drop empty rows, normalize headers, export XLSX. Original PDF is never overwritten.",
+    description: "Trích xuất bảng, xóa dòng trống, chuẩn hóa tiêu đề và xuất XLSX. Giữ nguyên PDF gốc.",
     accepts: ["pdf"],
     mode: "chain",
     sampleFile: "Welcome.pdf",
@@ -34,8 +34,8 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: "image-ocr-md",
-    title: "Image → OCR → Markdown",
-    description: "Local Tesseract OCR, then clean text and wrap as Markdown.",
+    title: "Ảnh → OCR → Markdown",
+    description: "Nhận dạng văn bản bằng Tesseract, làm sạch và chuyển sang Markdown.",
     accepts: ["image"],
     mode: "chain",
     sampleFile: "Scan.png",
@@ -47,8 +47,8 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: "csv-clean-xlsx",
-    title: "CSV → clean → Excel",
-    description: "Remove duplicate rows, fill missing values, export XLSX. Open the Chart tab for a live plot.",
+    title: "CSV → làm sạch → Excel",
+    description: "Xóa dòng trùng, điền giá trị còn thiếu và xuất XLSX. Mở thẻ Biểu đồ để xem dữ liệu.",
     accepts: ["spreadsheet", "table"],
     mode: "chain",
     sampleFile: "Sales.csv",
@@ -60,8 +60,8 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: "zip-extract",
-    title: "ZIP → extract",
-    description: "Unpack safe archive members with zip-slip and bomb limits.",
+    title: "ZIP → giải nén",
+    description: "Giải nén an toàn, kiểm tra đường dẫn và giới hạn dung lượng.",
     accepts: ["archive"],
     mode: "chain",
     sampleFile: "samples.zip",
@@ -69,8 +69,8 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: "batch-compress-images",
-    title: "Compress all images",
-    description: "Run local JPEG/WebP compression on every selected image with worker concurrency.",
+    title: "Nén tất cả hình ảnh",
+    description: "Nén cục bộ tất cả hình ảnh đã chọn sang JPEG/WebP.",
     accepts: ["image"],
     mode: "each",
     minFiles: 2,
@@ -104,7 +104,7 @@ export function resolveFileDrop(source: FileRecord, target: FileRecord): DropOpt
   const options: DropOption[] = [
     {
       id: "compare",
-      title: "Compare",
+      title: "So sánh",
       detail: `${source.name} vs ${target.name}`,
       intent: "compare",
     },
@@ -113,8 +113,8 @@ export function resolveFileDrop(source: FileRecord, target: FileRecord): DropOpt
   if (tableLike(source.kind) && tableLike(target.kind)) {
     options.push({
       id: "merge",
-      title: "Merge tables",
-      detail: "Stack rows if columns are compatible",
+      title: "Gộp bảng",
+      detail: "Nối các dòng khi các cột tương thích",
       actionId: "table.merge",
       intent: "merge",
     });
@@ -122,8 +122,8 @@ export function resolveFileDrop(source: FileRecord, target: FileRecord): DropOpt
   if (source.kind === "pdf" && tableLike(target.kind)) {
     options.push({
       id: "pdf-tables",
-      title: "Extract tables from PDF",
-      detail: "Then you can merge into the spreadsheet",
+      title: "Trích xuất bảng từ PDF",
+      detail: "Sau đó có thể gộp vào bảng tính",
       actionId: "pdf.extract-tables",
       intent: "action",
     });
@@ -131,8 +131,8 @@ export function resolveFileDrop(source: FileRecord, target: FileRecord): DropOpt
   if (source.kind === "image" && (target.kind === "text" || target.kind === "markdown")) {
     options.push({
       id: "ocr",
-      title: "OCR image to text",
-      detail: "Local Tesseract — never faked",
+      title: "Nhận dạng văn bản từ ảnh",
+      detail: "Nhận dạng cục bộ bằng Tesseract",
       actionId: "image.ocr",
       intent: "action",
     });

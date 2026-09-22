@@ -7,7 +7,7 @@ async function drawToCanvas(blob: Blob, mutate: (ctx: CanvasRenderingContext2D, 
   canvas.width = bmp.width;
   canvas.height = bmp.height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new OmniError("ParserFailure", "Canvas unavailable");
+  if (!ctx) throw new OmniError("ParserFailure", "Không thể khởi tạo vùng vẽ");
   const size = mutate(ctx, bmp.width, bmp.height);
   if (size) {
     canvas.width = size.w;
@@ -20,15 +20,15 @@ async function drawToCanvas(blob: Blob, mutate: (ctx: CanvasRenderingContext2D, 
 
 function toBlob(canvas: HTMLCanvasElement, mime: string, quality?: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Encode failed"))), mime, quality);
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Không thể mã hóa"))), mime, quality);
   });
 }
 
 export const rotateImageAction: FileAction = {
   id: "image.rotate",
-  title: "Rotate 90°",
-  description: "Rotate clockwise 90 degrees",
-  category: "Image",
+  title: "Xoay 90°",
+  description: "Xoay 90 độ theo chiều kim đồng hồ",
+  category: "Hình ảnh",
   accepts: ["image"],
   produces: ["image"],
   execution: "local",
@@ -53,9 +53,9 @@ export const rotateImageAction: FileAction = {
 
 export const flipImageAction: FileAction = {
   id: "image.flip-h",
-  title: "Flip horizontal",
-  description: "Mirror the image on the vertical axis",
-  category: "Image",
+  title: "Lật ngang",
+  description: "Lật ảnh theo trục dọc",
+  category: "Hình ảnh",
   accepts: ["image"],
   produces: ["image"],
   execution: "local",
@@ -80,14 +80,14 @@ export const flipImageAction: FileAction = {
 
 export const resizeImageAction: FileAction = {
   id: "image.resize",
-  title: "Resize image",
-  description: "Scale to a target width, keeping aspect ratio",
-  category: "Image",
+  title: "Đổi kích thước ảnh",
+  description: "Đổi chiều rộng và giữ nguyên tỷ lệ ảnh",
+  category: "Hình ảnh",
   accepts: ["image"],
   produces: ["image"],
   execution: "local",
   keywords: ["resize", "smaller", "scale", "compress"],
-  configSchema: [{ key: "width", label: "Width (px)", type: "number", default: 800 }],
+  configSchema: [{ key: "width", label: "Chiều rộng (px)", type: "number", default: 800 }],
   canRun: () => true,
   async execute(ctx) {
     const file = ctx.files[0]!;
@@ -107,9 +107,9 @@ export const resizeImageAction: FileAction = {
 
 export const compressImageAction: FileAction = {
   id: "image.compress",
-  title: "Compress JPEG",
-  description: "Re-encode as JPEG at quality 0.72",
-  category: "Image",
+  title: "Nén JPEG",
+  description: "Nén lại thành JPEG với chất lượng 0,72",
+  category: "Hình ảnh",
   accepts: ["image"],
   produces: ["image"],
   execution: "local",
@@ -126,9 +126,9 @@ export const compressImageAction: FileAction = {
 
 export const convertWebpAction: FileAction = {
   id: "image.convert-webp",
-  title: "Convert to WebP",
-  description: "Encode the image as WebP",
-  category: "Image",
+  title: "Chuyển sang WebP",
+  description: "Chuyển hình ảnh sang định dạng WebP",
+  category: "Hình ảnh",
   accepts: ["image"],
   produces: ["image"],
   execution: "local",
@@ -158,9 +158,9 @@ export async function probeOcr(): Promise<boolean> {
 
 export const ocrAction: FileAction = {
   id: "image.ocr",
-  title: "OCR text",
-  description: "Recognize text locally with Tesseract.js — never faked",
-  category: "Image",
+  title: "Nhận dạng văn bản (OCR)",
+  description: "Nhận dạng văn bản cục bộ bằng Tesseract.js",
+  category: "Hình ảnh",
   accepts: ["image", "pdf"],
   produces: ["text"],
   execution: "local",
@@ -168,12 +168,12 @@ export const ocrAction: FileAction = {
   canRun: ({ files }) => files.some((f) => f.kind === "image" || f.kind === "pdf"),
   async execute(ctx) {
     const file = ctx.files[0]!;
-    ctx.onProgress?.({ message: "Loading Tesseract" });
+    ctx.onProgress?.({ message: "Đang tải Tesseract" });
     let createWorker: typeof import("tesseract.js").createWorker;
     try {
       ({ createWorker } = await import("tesseract.js"));
     } catch {
-      throw new OmniError("ActionUnavailable", "OCR engine failed to load in this environment");
+      throw new OmniError("ActionUnavailable", "Không thể tải công cụ nhận dạng văn bản");
     }
     const worker = await createWorker("eng", 1, {
       logger: (m) => {
@@ -201,7 +201,7 @@ export const ocrAction: FileAction = {
               document: { kind: "text", fileId: "", text: "", encoding: "utf-8", lineCount: 0, wordCount: 0 },
             },
           ],
-          warnings: ["OCR finished but found no readable text"],
+          warnings: ["Đã nhận dạng nhưng không tìm thấy văn bản đọc được"],
         };
       }
       return {

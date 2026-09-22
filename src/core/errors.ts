@@ -40,11 +40,11 @@ export function errorMessage(err: unknown): string {
   if (err instanceof OmniError) return err.message;
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;
-  return "Unknown error";
+  return "Lỗi không xác định";
 }
 
 export function throwIfAborted(signal?: AbortSignal) {
   if (signal?.aborted) {
-    throw new OmniError("Cancelled", "Operation cancelled");
+    throw new OmniError("Cancelled", "Đã hủy thao tác");
   }
 }

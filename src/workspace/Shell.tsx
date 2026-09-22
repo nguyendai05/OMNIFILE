@@ -1,3 +1,4 @@
+import { uiLabel } from "@/lib/locale";
 import { useEffect, useRef, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { Toaster, toast } from "sonner";
@@ -63,11 +64,11 @@ import { errorMessage } from "@/core/errors";
 bootstrapRegistries();
 
 const activities = [
-  { id: "files", icon: Files, label: "Files" },
-  { id: "pipelines", icon: Layers, label: "Pipelines" },
-  { id: "history", icon: History, label: "History" },
-  { id: "lineage", icon: GitBranch, label: "Lineage" },
-  { id: "search", icon: Search, label: "Search" },
+  { id: "files", icon: Files, label: "Tệp" },
+  { id: "pipelines", icon: Layers, label: "Quy trình" },
+  { id: "history", icon: History, label: "Lịch sử" },
+  { id: "lineage", icon: GitBranch, label: "Nguồn gốc" },
+  { id: "search", icon: Search, label: "Tìm kiếm" },
 ] as const;
 
 export function Shell() {
@@ -102,7 +103,7 @@ export function Shell() {
         try {
           await seedDemoWorkspace();
         } catch (err) {
-          toast.error("Could not load sample files");
+          toast.error("Không thể tải tệp mẫu");
           console.error(err);
         }
       }
@@ -156,7 +157,7 @@ export function Shell() {
   async function onFiles(list: FileList | File[] | null) {
     if (!list || (Array.isArray(list) ? !list.length : !list.length)) return;
     const arr = Array.from(list as FileList);
-    toast.message(`Importing ${arr.length} file${arr.length === 1 ? "" : "s"}`);
+    toast.message(`Đang nhập ${arr.length} tệp`);
     await importBrowserFiles(arr, "drop");
   }
 
@@ -181,10 +182,9 @@ export function Shell() {
         {layout.activity === "files" && <Explorer />}
         {layout.activity === "pipelines" && (
           <div className="p-2">
-            <Button size="sm" className="mb-2 w-full" onClick={() => void createPipeline()}>
-              New pipeline
+            <Button size="sm" className="mb-2 w-full" onClick={() => void createPipeline()}>Quy trình mới
             </Button>
-            <p className="px-1 text-[11px] text-muted">Open the pipeline canvas from the main workspace when this activity is selected.</p>
+            <p className="px-1 text-[11px] text-muted">Mở và chỉnh sửa quy trình trong vùng làm việc chính.</p>
           </div>
         )}
         {layout.activity === "history" && (
@@ -192,10 +192,10 @@ export function Shell() {
             {history.ops.map((op, i) => (
               <div key={op.id} className={cn("rounded-sm px-2 py-1.5", i === history.pointer && "bg-surface-3")}>
                 <div className="font-medium">{op.label}</div>
-                <div className="text-[10px] text-faint">{new Date(op.at).toLocaleTimeString()}</div>
+                <div className="text-[10px] text-faint">{new Date(op.at).toLocaleTimeString("vi-VN")}</div>
               </div>
             ))}
-            {!history.ops.length && <p className="p-3 text-muted">No operations yet.</p>}
+            {!history.ops.length && <p className="p-3 text-muted">Chưa có thao tác nào.</p>}
           </div>
         )}
         {layout.activity === "lineage" && <LineageView compact />}
@@ -226,13 +226,13 @@ export function Shell() {
                 <span className="max-w-40 truncate">{t.title}</span>
                 {t.pinned && <Pin className="size-2.5 text-accent" />}
               </button>
-              <button className="rounded-sm p-0.5 opacity-0 hover:bg-surface-3 group-hover:opacity-100" onClick={() => closeTab(t.id)} aria-label="Close tab">
+              <button className="rounded-sm p-0.5 opacity-0 hover:bg-surface-3 group-hover:opacity-100" onClick={() => closeTab(t.id)} aria-label="Đóng thẻ">
                 <X className="size-3" />
               </button>
             </div>
           );
         })}
-        {!tabs.length && <span className="px-3 py-2 text-[12px] text-faint">No document open</span>}
+        {!tabs.length && <span className="px-3 py-2 text-[12px] text-faint">Chưa mở tài liệu</span>}
       </div>
       <div className="min-h-0 flex-1">
         {layout.activity === "pipelines" ? (
@@ -253,9 +253,9 @@ export function Shell() {
   const bottom = (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-2 border-b border-border px-2 py-1 text-[11px]">
-        <span className="font-medium">Jobs</span>
-        <Badge tone={running ? "info" : "muted"}>{running ? `${running} running` : "idle"}</Badge>
-        <span className="ml-auto text-faint">LOCAL · nothing leaves this browser</span>
+        <span className="font-medium">Tác vụ</span>
+        <Badge tone={running ? "info" : "muted"}>{running ? `${running} đang chạy` : "chờ"}</Badge>
+        <span className="ml-auto text-faint">CỤC BỘ · tệp được xử lý trong trình duyệt</span>
       </div>
       <div className="flex-1 overflow-auto">
         {jobs
@@ -263,26 +263,24 @@ export function Shell() {
           .reverse()
           .map((j) => (
             <div key={j.id} className="flex items-center gap-2 border-b border-border/60 px-3 py-1.5 text-[12px]">
-              <span className="status-color w-20 capitalize" data-status={j.status}>{j.status}</span>
+              <span className="status-color w-20 capitalize" data-status={uiLabel(j.status)}>{uiLabel(j.status)}</span>
               <span className="min-w-0 flex-1 truncate">{j.title}</span>
               <span className="w-36 truncate text-faint">{j.message ?? j.error?.message}</span>
               <span className="w-16 text-right mono text-faint">{j.progress === null ? "—" : `${Math.round((j.progress ?? 0) * 100)}%`}</span>
               {(j.status === "running" || j.status === "queued") && (
-                <button className="text-[11px] text-muted hover:text-foreground" onClick={() => cancelJob(j.id)}>
-                  Cancel
+                <button className="text-[11px] text-muted hover:text-foreground" onClick={() => cancelJob(j.id)}>Hủy
                 </button>
               )}
               {j.status === "failed" && j.actionId && (
                 <button
                   className="text-[11px] text-muted hover:text-foreground"
                   onClick={() => void retryJob(j.id).catch((err: unknown) => toast.error(errorMessage(err)))}
-                >
-                  Retry
+                >Thử lại
                 </button>
               )}
             </div>
           ))}
-        {!jobs.length && <p className="p-3 text-[12px] text-faint">Job log is empty.</p>}
+        {!jobs.length && <p className="p-3 text-[12px] text-faint">Chưa có tác vụ nào.</p>}
       </div>
     </div>
   );
@@ -305,21 +303,19 @@ export function Shell() {
       <header className="flex h-11 shrink-0 items-center gap-3 border-b border-border bg-surface px-3">
         <div className="flex items-baseline gap-2">
           <span className="text-[13px] font-semibold tracking-[0.14em]">OMNIFILE</span>
-          <span className="hidden text-[11px] text-muted sm:inline">File intelligence workbench</span>
+          <span className="hidden text-[11px] text-muted sm:inline">Công cụ xử lý tệp</span>
         </div>
         <button
           className="ml-4 hidden h-7 min-w-48 items-center gap-2 rounded-md border border-border bg-background px-2 text-[12px] text-muted md:flex"
           onClick={() => workspaceStore.setState((s) => ({ ui: { ...s.ui, commandOpen: true } }))}
         >
-          <CommandIcon className="size-3.5" />
-          Search or run
+          <CommandIcon className="size-3.5" />Tìm kiếm hoặc chạy
           <kbd className="ml-auto text-[10px] text-faint">⌘K</kbd>
         </button>
         <div className="ml-auto flex items-center gap-1">
-          <Badge tone="accent">LOCAL</Badge>
+          <Badge tone="accent">CỤC BỘ</Badge>
           <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>
-            <Upload className="size-3.5" />
-            Open
+            <Upload className="size-3.5" />Mở
           </Button>
           <Button
             size="sm"
@@ -330,12 +326,12 @@ export function Shell() {
                 if (!/abort|cancel/i.test(msg)) toast.error(msg);
               })
             }
-            aria-label="Open folder"
-            title="Open folder"
+            aria-label="Mở thư mục"
+            title="Mở thư mục"
           >
             <FolderOpen className="size-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme">
+          <Button size="icon" variant="ghost" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Đổi giao diện sáng/tối">
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </Button>
         </div>
@@ -375,11 +371,11 @@ export function Shell() {
           <nav className="flex h-14 border-t border-border">
             {(["files", "view", "actions"] as const).map((t) => (
               <button
-                key={t}
+                key={uiLabel(t)}
                 onClick={() => setMobileTab(t)}
                 className={cn("flex-1 text-xs capitalize", mobileTab === t ? "text-foreground" : "text-muted")}
               >
-                {t}
+                {uiLabel(t)}
               </button>
             ))}
           </nav>
@@ -410,10 +406,10 @@ export function Shell() {
 
       <footer className="flex h-7 shrink-0 items-center gap-3 border-t border-border bg-surface px-3 text-[10px] uppercase tracking-wide text-muted">
         <span className="flex items-center gap-1">
-          <Activity className="size-3" /> {hydrated ? "Ready" : "Loading"}
+          <Activity className="size-3" /> {hydrated ? "Sẵn sàng" : "Đang tải"}
         </span>
-        <span>{Object.keys(files).length} files</span>
-        <span className="ml-auto">Undo {history.pointer + 1}/{history.ops.length}</span>
+        <span>{Object.keys(files).length} tệp</span>
+        <span className="ml-auto">Hoàn tác {history.pointer + 1}/{history.ops.length}</span>
       </footer>
 
       <input
@@ -429,7 +425,7 @@ export function Shell() {
 
       {dragging && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-overlay">
-          <div className="rounded-xl border border-accent bg-surface px-8 py-6 text-sm">Drop files to import — processed locally</div>
+          <div className="rounded-xl border border-accent bg-surface px-8 py-6 text-sm">Thả tệp để nhập — xử lý cục bộ</div>
         </div>
       )}
 
@@ -443,8 +439,7 @@ export function Shell() {
 
       {diagnosticsOpen && (
         <div className="fixed bottom-10 right-4 z-40 w-64 rounded-lg border border-border bg-surface p-3 font-mono text-[11px] shadow-[var(--shadow-pop)]">
-          <div className="mb-1 flex items-center justify-between font-sans text-[10px] uppercase text-muted">
-            Diagnostics
+          <div className="mb-1 flex items-center justify-between font-sans text-[10px] uppercase text-muted">Chẩn đoán
             <Pin className="size-3" />
           </div>
           <div>files {diag.files}</div>
@@ -467,15 +462,13 @@ function EmptyState({ onPick }: { onPick: () => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
       <div>
-        <p className="text-lg font-medium tracking-tight">Drop a file to inspect it</p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-pretty text-muted">
-          PDFs, spreadsheets, images, archives, and text become structured documents. Transforms write new artifacts and keep lineage.
+        <p className="text-lg font-medium tracking-tight">Thả tệp để xem nội dung</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-pretty text-muted">Xem và xử lý PDF, bảng tính, hình ảnh, tệp nén và văn bản. Mỗi thao tác tạo tệp mới và lưu lại nguồn gốc.
         </p>
       </div>
       <div className="flex gap-2">
-        <Button onClick={onPick}>Open files</Button>
-        <Button variant="secondary" onClick={() => void seedDemoWorkspace(true)}>
-          Reload samples
+        <Button onClick={onPick}>Mở tệp</Button>
+        <Button variant="secondary" onClick={() => void seedDemoWorkspace(true)}>Tải lại tệp mẫu
         </Button>
       </div>
       <div className="mt-2 grid w-full max-w-2xl gap-2 sm:grid-cols-2">
@@ -486,7 +479,7 @@ function EmptyState({ onPick }: { onPick: () => void }) {
             onClick={() => {
               const sample = r.sampleFile ? findSample(r.sampleFile) : undefined;
               if (sample) void runRecipeUi(r.id, [sample.id]);
-              else toast.message("Load samples first, then run this recipe.");
+              else toast.message("Hãy tải tệp mẫu trước khi chạy quy trình này.");
             }}
           >
             <div className="text-[12px] font-medium">{r.title}</div>
@@ -515,7 +508,7 @@ function WorkspaceSearch() {
   }, [q]);
   return (
     <div className="flex h-full flex-col p-2">
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search workspace" className="mb-2 h-8 rounded-md border border-border bg-surface px-2 text-xs" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm trong không gian làm việc" className="mb-2 h-8 rounded-md border border-border bg-surface px-2 text-xs" />
       <div className="flex-1 overflow-auto">
         {hits.map((h, i) => (
           <button key={i} className="mb-1 w-full rounded-md px-2 py-1.5 text-left text-[12px] hover:bg-surface-2" onClick={() => openTab(h.fileId)}>
@@ -543,30 +536,30 @@ function ContextMenu({ x, y, fileIds }: { x: number; y: number; fileIds: string[
       onMouseLeave={() => workspaceStore.setState((s) => ({ ui: { ...s.ui, contextMenu: null } }))}
     >
       <MenuItem
-        label="Open"
+        label="Mở"
         onClick={() => {
           fileIds.forEach(openTab);
           closeMenu();
         }}
       />
       <MenuItem
-        label="Rename"
+        label="Đổi tên"
         onClick={() => {
           const id = fileIds[0];
-          const name = id ? prompt("Rename", files[id]?.name) : null;
+          const name = id ? prompt("Đổi tên", files[id]?.name) : null;
           if (id && name) void renameFile(id, name);
           closeMenu();
         }}
       />
       <MenuItem
-        label="Duplicate"
+        label="Tạo bản sao"
         onClick={() => {
           if (fileIds[0]) void duplicateFile(fileIds[0]);
           closeMenu();
         }}
       />
       <MenuItem
-        label="Compare with next…"
+        label="So sánh với tệp tiếp theo…"
         onClick={() => {
           if (fileIds.length >= 2) workspaceStore.setState({ compare: { leftId: fileIds[0]!, rightId: fileIds[1]! } });
           closeMenu();
@@ -585,7 +578,7 @@ function ContextMenu({ x, y, fileIds }: { x: number; y: number; fileIds: string[
       ))}
       <div className="my-1 h-px bg-border" />
       <MenuItem
-        label="Delete"
+        label="Xóa"
         onClick={() => {
           void deleteFiles(fileIds);
           closeMenu();
@@ -606,7 +599,7 @@ function DropMenu({
       style={{ left: menu.x, top: menu.y }}
       onMouseLeave={() => workspaceStore.setState((s) => ({ ui: { ...s.ui, dropMenu: null } }))}
     >
-      <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-muted">Drop onto file</p>
+      <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-muted">Thả lên tệp</p>
       {menu.options.map((opt) => (
         <button
           key={opt.actionId}

@@ -19,7 +19,7 @@ export function Badge({
     info: "bg-info/15 text-info",
   };
   return (
-    <span className={cn("inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide", tones[tone], className)}>
+    <span className={cn("inline-flex shrink-0 items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide", tones[tone], className)}>
       {children}
     </span>
   );

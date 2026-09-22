@@ -55,7 +55,7 @@ function wordCount(text: string): number {
 export const textParser: FileParser = {
   id: "text",
   version: "1.0.0",
-  label: "Text",
+  label: "Văn bản",
   supports: (f: FileRecord) =>
     f.kind === "text" || f.kind === "markdown" || f.kind === "code" || f.kind === "html" || f.detectedMime.startsWith("text/"),
   async parse(file, ctx: ParserContext): Promise<TextDocument> {

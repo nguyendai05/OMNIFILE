@@ -50,7 +50,7 @@ async function waveformFrom(blob: Blob, signal?: AbortSignal): Promise<number[] 
 export const audioParser: FileParser = {
   id: "audio",
   version: "1.0.0",
-  label: "Audio",
+  label: "Âm thanh",
   supports: (f: FileRecord) => f.kind === "audio",
   async parse(file, ctx: ParserContext): Promise<MediaDocument> {
     throwIfAborted(ctx.signal);
@@ -58,7 +58,7 @@ export const audioParser: FileParser = {
     await waitMeta(el);
     const duration = Number.isFinite(el.duration) ? el.duration : undefined;
     URL.revokeObjectURL(el.src);
-    ctx.onProgress?.({ message: "Building waveform" });
+    ctx.onProgress?.({ message: "Đang tạo dạng sóng" });
     const waveform = await waveformFrom(ctx.blob, ctx.signal);
     return {
       kind: "audio",

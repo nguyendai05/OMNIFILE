@@ -1,8 +1,9 @@
 {
   "id": "/",
+  "lang": "vi",
   "name": "OMNIFILE",
   "short_name": "OMNIFILE",
-  "description": "Inspect, transform, and connect your files locally.",
+  "description": "Xem, xử lý và kết nối tệp ngay trong trình duyệt.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
