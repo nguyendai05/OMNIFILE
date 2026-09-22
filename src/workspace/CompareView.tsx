@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/use-language";
+import { t as tr } from "@/lib/locale";
 import { useMemo } from "react";
 import { compareFiles } from "@/core/compare";
 import { useWorkspace, workspaceStore } from "@/core/store";
@@ -5,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function CompareView() {
+  useLanguage();
   const compare = useWorkspace((s) => s.compare);
   const files = useWorkspace((s) => s.files);
   const selected = useWorkspace((s) => s.selectedIds);
@@ -18,7 +21,7 @@ export function CompareView() {
 
   if (!left || !right) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">Chọn hai tệp để so sánh hoặc thả một tệp lên tệp còn lại.
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">{tr("Chọn hai tệp để so sánh hoặc thả một tệp lên tệp còn lại.")}
       </div>
     );
   }
@@ -29,8 +32,8 @@ export function CompareView() {
         <span className="font-medium">{left.name}</span>
         <span className="text-faint">vs</span>
         <span className="font-medium">{right.name}</span>
-        <span className="ml-auto text-muted">{result?.summary}</span>
-        <Button size="xs" variant="ghost" onClick={() => workspaceStore.setState({ compare: null })}>Đóng
+        <span className="ml-auto text-muted">{result?.summary && tr(result.summary)}</span>
+        <Button size="xs" variant="ghost" onClick={() => workspaceStore.setState({ compare: null })}>{tr("Đóng")}
         </Button>
       </div>
       <div className="flex-1 overflow-auto p-3 font-mono text-[11px] leading-5">

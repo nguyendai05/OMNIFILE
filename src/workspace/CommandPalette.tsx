@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/use-language";
+import { t as tr } from "@/lib/locale";
 import { uiLabel } from "@/lib/locale";
 import { useEffect, useMemo, useState } from "react";
 import { Command } from "cmdk";
@@ -10,6 +12,7 @@ import { actionRegistry } from "@/core/registries";
 import { FileKindIcon } from "./FileIcon";
 
 export function CommandPalette() {
+  const language = useLanguage();
   const open = useWorkspace((s) => s.ui.commandOpen);
   const selected = useWorkspace((s) => s.selectedIds);
   const [query, setQuery] = useState("");
@@ -44,21 +47,21 @@ export function CommandPalette() {
 
   const recipeHits = useMemo(
     () =>
-      RECIPES.map((r) => ({ r, score: scoreSearch(query, [r.title, r.description, r.id]) }))
+      RECIPES.map((r) => ({ r, score: scoreSearch(query, [r.title, tr(r.title), r.description, tr(r.description), r.id]) }))
         .filter((x) => !query || x.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 6),
-    [query],
+    [query, language],
   );
 
   const actionHits = useMemo(() => {
     const pool = selected.length ? availableActions(selected) : actionRegistry.all();
     return pool
-      .map((a) => ({ a, score: scoreSearch(query, [a.title, a.id, a.description, ...a.keywords]) }))
+      .map((a) => ({ a, score: scoreSearch(query, [a.title, tr(a.title), a.id, a.description, tr(a.description), ...a.keywords]) }))
       .filter((x) => !query || x.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
-  }, [query, selected]);
+  }, [query, selected, language]);
 
   if (!open) return null;
 
@@ -72,12 +75,12 @@ export function CommandPalette() {
         <Command.Input
           value={query}
           onValueChange={setQuery}
-          placeholder="Tìm tệp, thao tác hoặc lệnh"
+          placeholder={tr("Tìm tệp, thao tác hoặc lệnh")}
           className="h-11 w-full border-b border-border bg-transparent px-4 text-sm outline-none"
         />
         <Command.List className="max-h-[min(420px,60vh)] overflow-auto p-2">
-          <Command.Empty className="px-3 py-6 text-center text-xs text-muted">Không có kết quả phù hợp.</Command.Empty>
-          <Command.Group heading="Tệp" className="mb-2 text-[10px] uppercase tracking-wide text-muted">
+          <Command.Empty className="px-3 py-6 text-center text-xs text-muted">{tr("Không có kết quả phù hợp.")}</Command.Empty>
+          <Command.Group heading={tr("Tệp")} className="mb-2 text-[10px] uppercase tracking-wide text-muted">
             {fileHits.map(({ f }) => (
               <Command.Item
                 key={f.id}
@@ -93,11 +96,11 @@ export function CommandPalette() {
               </Command.Item>
             ))}
           </Command.Group>
-          <Command.Group heading="Quy trình mẫu" className="mb-2 text-[10px] uppercase tracking-wide text-muted">
+          <Command.Group heading={tr("Quy trình mẫu")} className="mb-2 text-[10px] uppercase tracking-wide text-muted">
             {recipeHits.map(({ r }) => (
               <Command.Item
                 key={r.id}
-                value={r.title}
+                value={tr(r.title)}
                 onSelect={() => {
                   const ids = selected.length ? selected : [];
                   if (ids.length) void runRecipeUi(r.id, ids);
@@ -105,16 +108,16 @@ export function CommandPalette() {
                 }}
                 className="flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-[13px] data-[selected=true]:bg-surface-3"
               >
-                <span>{r.title}</span>
-                <span className="text-[10px] uppercase text-faint">quy trình mẫu</span>
+                <span>{tr(r.title)}</span>
+                <span className="text-[10px] uppercase text-faint">{tr("quy trình mẫu")}</span>
               </Command.Item>
             ))}
           </Command.Group>
-          <Command.Group heading="Thao tác" className="mb-2 text-[10px] uppercase tracking-wide text-muted">
+          <Command.Group heading={tr("Thao tác")} className="mb-2 text-[10px] uppercase tracking-wide text-muted">
             {actionHits.map(({ a }) => (
               <Command.Item
                 key={a.id}
-                value={a.title}
+                value={tr(a.title)}
                 onSelect={() => {
                   const ids = selected.length ? selected : [];
                   if (ids.length) void runActionUi(a.id, ids);
@@ -122,21 +125,21 @@ export function CommandPalette() {
                 }}
                 className="flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-[13px] data-[selected=true]:bg-surface-3"
               >
-                <span>{a.title}</span>
+                <span>{tr(a.title)}</span>
                 <span className="text-[10px] uppercase text-faint">{uiLabel(a.execution)}</span>
               </Command.Item>
             ))}
           </Command.Group>
-          {(!query || scoreSearch(query, ["Đổi giao diện sáng tối", "theme"]) > 0) && <Command.Group heading="Lệnh" className="text-[10px] uppercase tracking-wide text-muted">
+          {(!query || scoreSearch(query, [tr("Đổi giao diện sáng/tối"), "Đổi giao diện sáng tối", "theme"]) > 0) && <Command.Group heading={tr("Lệnh")} className="text-[10px] uppercase tracking-wide text-muted">
             <Command.Item
-              value="Đổi giao diện sáng tối theme"
+              value={tr("Đổi giao diện sáng tối theme")}
               onSelect={() => {
                 const t = workspaceStore.getState().ui.theme === "dark" ? "light" : "dark";
                 setTheme(t);
                 workspaceStore.setState((s) => ({ ui: { ...s.ui, commandOpen: false } }));
               }}
               className="rounded-md px-2 py-1.5 text-[13px] data-[selected=true]:bg-surface-3"
-            >Đổi giao diện sáng/tối
+            >{tr("Đổi giao diện sáng/tối")}
             </Command.Item>
           </Command.Group>}
           {hits.filter((h) => h.field === "text").slice(0, 6).map((h) => (

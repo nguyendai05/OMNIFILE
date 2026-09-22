@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/use-language";
+import { t as tr } from "@/lib/locale";
 import { normalizeSearch } from "@/lib/locale";
 import { useMemo, useState } from "react";
 import { ChevronRight, FolderPlus } from "lucide-react";
@@ -9,6 +11,7 @@ import { FileKindIcon } from "./FileIcon";
 import { resolveFileDrop } from "@/core/recipes";
 
 export function Explorer() {
+  useLanguage();
   const files = useWorkspace((s) => filesList(s));
   const folders = useWorkspace((s) => Object.values(s.folders));
   const selected = useWorkspace((s) => s.selectedIds);
@@ -29,13 +32,13 @@ export function Explorer() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Lọc tệp"
+          placeholder={tr("Lọc tệp")}
           className="h-7 w-full rounded-md border border-border bg-surface px-2 text-xs"
         />
         <button
           className="size-7 rounded-md text-muted hover:bg-surface-2 hover:text-foreground"
-          title="Thư mục mới"
-          onClick={() => ensureFolder("Thư mục chưa đặt tên")}
+          title={tr("Thư mục mới")}
+          onClick={() => ensureFolder(tr("Thư mục chưa đặt tên"))}
         >
           <FolderPlus className="mx-auto size-3.5" />
         </button>
@@ -64,7 +67,7 @@ export function Explorer() {
         {unfiled.map((f) => (
           <FileRow key={f.id} id={f.id} name={f.name} kind={f.kind} size={f.size} selected={selected.includes(f.id)} depth={0} />
         ))}
-        {!visible.length && <p className="px-2 py-6 text-center text-[11px] text-faint">Thả tệp để nhập</p>}
+        {!visible.length && <p className="px-2 py-6 text-center text-[11px] text-faint">{tr("Thả tệp để nhập")}</p>}
       </div>
     </div>
   );
@@ -85,6 +88,7 @@ function FileRow({
   selected: boolean;
   depth: number;
 }) {
+  useLanguage();
   return (
     <button
       draggable

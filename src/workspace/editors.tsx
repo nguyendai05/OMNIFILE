@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/use-language";
+import { t as tr } from "@/lib/locale";
 import { uiLabel } from "@/lib/locale";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -32,14 +34,15 @@ import { runActionUi } from "./run";
 import { renderPdfPage } from "@/parsers/pdf";
 
 export function DocumentEditor({ file }: { file: FileRecord }) {
+  useLanguage();
   const doc = useDocument(file.id);
   if (file.parseStatus === "parsing" || file.parseStatus === "queued") {
-    return <PaneMessage title="Đang đọc tệp" body={`CỤC BỘ · ${file.name}`} />;
+    return <PaneMessage title={tr("Đang đọc tệp")} body={tr(`CỤC BỘ · ${file.name}`)} />;
   }
   if (file.parseStatus === "error") {
-    return <PaneMessage title="Không thể đọc tệp" body={file.parseError ?? "Lỗi không xác định"} />;
+    return <PaneMessage title={tr("Không thể đọc tệp")} body={file.parseError ?? tr("Lỗi không xác định")} />;
   }
-  if (!doc) return <PaneMessage title="Đang mở" body="Đang chuẩn bị nội dung tài liệu." />;
+  if (!doc) return <PaneMessage title={tr("Đang mở")} body={tr("Đang chuẩn bị nội dung tài liệu.")} />;
   switch (doc.kind) {
     case "pdf":
       return <PdfEditor file={file} doc={doc} />;
@@ -77,15 +80,17 @@ export function DocumentEditor({ file }: { file: FileRecord }) {
 }
 
 function PaneMessage({ title, body }: { title: string; body: string }) {
+  useLanguage();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-      <p className="text-sm font-medium">{title}</p>
-      <p className="max-w-md text-xs text-muted">{body}</p>
+      <p className="text-sm font-medium">{tr(title)}</p>
+      <p className="max-w-md text-xs text-muted">{tr(body)}</p>
     </div>
   );
 }
 
 function PdfEditor({ file, doc }: { file: FileRecord; doc: PdfDocument }) {
+  useLanguage();
   const [page, setPage] = useState(0);
   const [scale, setScale] = useState(1.15);
   const [query, setQuery] = useState("");
@@ -141,8 +146,8 @@ function PdfEditor({ file, doc }: { file: FileRecord; doc: PdfDocument }) {
               page === p.index ? "border-accent bg-surface-2" : "border-transparent hover:bg-surface-2",
             )}
           >
-            Trang {p.index + 1}
-            {p.tables.length ? <span className="mt-1 block text-accent">{p.tables.length} bảng</span> : null}
+            {tr("Trang")} {p.index + 1}
+            {p.tables.length ? <span className="mt-1 block text-accent">{p.tables.length} {tr("bảng")}</span> : null}
           </button>
         ))}
       </div>
@@ -165,7 +170,7 @@ function PdfEditor({ file, doc }: { file: FileRecord; doc: PdfDocument }) {
           </Button>
           <div className="relative ml-auto w-48">
             <Search className="pointer-events-none absolute left-2 top-1.5 size-3.5 text-faint" />
-            <Input className="pl-7" placeholder="Tìm trong PDF" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <Input className="pl-7" placeholder={tr("Tìm trong PDF")} value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
         </div>
         <div className="flex-1 overflow-auto bg-background p-4">
@@ -177,19 +182,19 @@ function PdfEditor({ file, doc }: { file: FileRecord; doc: PdfDocument }) {
               <div className="flex flex-wrap gap-1">
                 {matches.map((m) => (
                   <button key={m.i} className="rounded-sm bg-surface-3 px-1.5 py-0.5 hover:bg-accent/20" onClick={() => setPage(m.i)}>
-                    tr.{m.i + 1} ×{m.n}
+                    {tr("tr.")}{m.i + 1} ×{m.n}
                   </button>
                 ))}
               </div>
             ) : (
-              "Không tìm thấy kết quả"
+              tr("Không tìm thấy kết quả")
             )}
           </div>
         )}
       </div>
       {tables.length > 0 && (
         <div className="hidden w-56 shrink-0 overflow-auto border-l border-border p-2 lg:block">
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted">Bảng được phát hiện</p>
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted">{tr("Bảng được phát hiện")}</p>
           {tables.map((t) => (
             <button
               key={`${t.page}-${t.index}`}
@@ -199,9 +204,9 @@ function PdfEditor({ file, doc }: { file: FileRecord; doc: PdfDocument }) {
                 void runActionUi("pdf.extract-tables", [file.id], { tableIndex: t.index });
               }}
             >
-              <div className="text-[11px] font-medium">Bảng {t.index + 1}</div>
+              <div className="text-[11px] font-medium">{tr("Bảng")} {t.index + 1}</div>
               <div className="text-[10px] text-muted">
-                Trang {t.page + 1} · {t.headers.length} cột · {t.rows.length} dòng
+                {tr("Trang")} {t.page + 1} · {t.headers.length} {tr("cột ·")} {t.rows.length} {tr("dòng")}
               </div>
             </button>
           ))}
@@ -222,6 +227,7 @@ function SheetEditor({
   workbook?: SpreadsheetDocument;
   table?: TableDocument;
 }) {
+  useLanguage();
   const parentRef = useRef<HTMLDivElement>(null);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"grid" | "profile" | "chart">("grid");
@@ -266,13 +272,13 @@ function SheetEditor({
         })
       : [];
 
-  if (!sheet) return <PaneMessage title="Trang tính trống" body="Không có dữ liệu dạng bảng." />;
+  if (!sheet) return <PaneMessage title={tr("Trang tính trống")} body={tr("Không có dữ liệu dạng bảng.")} />;
 
   const tableActions = [
-    { id: "table.remove-empty-rows", label: "Dòng trống" },
-    { id: "table.normalize-headers", label: "Tiêu đề cột" },
-    { id: "table.drop-duplicates", label: "Dòng trùng" },
-    { id: "table.fill-missing", label: "Điền ô trống" },
+    { id: "table.remove-empty-rows", label: tr("Dòng trống") },
+    { id: "table.normalize-headers", label: tr("Tiêu đề cột") },
+    { id: "table.drop-duplicates", label: tr("Dòng trùng") },
+    { id: "table.fill-missing", label: tr("Điền ô trống") },
     { id: "table.export-xlsx", label: "Excel" },
   ];
 
@@ -298,16 +304,16 @@ function SheetEditor({
               {uiLabel(t)}
             </Button>
           ))}
-          <Input className="ml-2 w-40" placeholder="Lọc dòng" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="ml-2 w-40" placeholder={tr("Lọc dòng")} value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1 border-b border-border px-3 py-1">
         {tableActions.map((a) => (
           <Button key={a.id} size="xs" variant="ghost" onClick={() => void runActionUi(a.id, [file.id])}>
-            {a.label}
+            {tr(a.label)}
           </Button>
         ))}
-        <span className="ml-auto text-[10px] text-faint">Sắp xếp chỉ đổi cách xem · thao tác tạo tệp mới</span>
+        <span className="ml-auto text-[10px] text-faint">{tr("Sắp xếp chỉ đổi cách xem · thao tác tạo tệp mới")}</span>
       </div>
       {tab === "grid" && (
         <div ref={parentRef} className="min-h-0 flex-1 overflow-auto">
@@ -351,7 +357,7 @@ function SheetEditor({
           <table className="w-full text-left text-[12px]">
             <thead className="text-[10px] uppercase text-muted">
               <tr>
-                {["Cột", "Kiểu", "Ô trống", "Duy nhất", "Nhỏ nhất", "Lớn nhất", "Trung bình"].map((h) => (
+                {[tr("Cột"), tr("Kiểu"), tr("Ô trống"), tr("Duy nhất"), tr("Nhỏ nhất"), tr("Lớn nhất"), tr("Trung bình")].map((h) => (
                   <th key={h} className="pb-2 font-medium">
                     {h}
                   </th>
@@ -383,10 +389,10 @@ function SheetEditor({
               </Button>
             ))}
             <Button size="xs" variant={chartKind === "bar" ? "secondary" : "ghost"} onClick={() => setChartKind("bar")}>
-              Cột
+              {tr("Cột")}
             </Button>
             <Button size="xs" variant={chartKind === "line" ? "secondary" : "ghost"} onClick={() => setChartKind("line")}>
-              Đường
+              {tr("Đường")}
             </Button>
           </div>
           <div className="min-h-0 flex-1 p-4">
@@ -409,7 +415,7 @@ function SheetEditor({
                 )}
               </ResponsiveContainer>
             ) : (
-              <PaneMessage title="Không có cột số" body="Biểu đồ sử dụng dữ liệu số trong bảng." />
+              <PaneMessage title={tr("Không có cột số")} body={tr("Biểu đồ sử dụng dữ liệu số trong bảng.")} />
             )}
           </div>
         </div>
@@ -419,6 +425,7 @@ function SheetEditor({
 }
 
 function ImageEditor({ file, doc }: { file: FileRecord; doc: ImageDocument }) {
+  useLanguage();
   const [url, setUrl] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
@@ -445,12 +452,12 @@ function ImageEditor({ file, doc }: { file: FileRecord; doc: ImageDocument }) {
         ) : null}
       </div>
       <div className="hidden w-56 shrink-0 overflow-auto border-l border-border p-3 text-[12px] lg:block">
-        <p className="text-[10px] uppercase tracking-wide text-muted">Hình ảnh</p>
+        <p className="text-[10px] uppercase tracking-wide text-muted">{tr("Hình ảnh")}</p>
         <p className="mt-1 mono">
           {doc.width} × {doc.height}
         </p>
         <p className="text-muted">{doc.format.toUpperCase()}</p>
-        {doc.hasAlpha && <Badge className="mt-2">trong suốt</Badge>}
+        {doc.hasAlpha && <Badge className="mt-2">{tr("trong suốt")}</Badge>}
         <div className="mt-3 flex gap-1">
           <Button size="xs" variant="secondary" onClick={() => setZoom((z) => Math.min(4, z + 0.25))}>
             +
@@ -461,7 +468,7 @@ function ImageEditor({ file, doc }: { file: FileRecord; doc: ImageDocument }) {
         </div>
         {hist && (
           <div className="mt-4 space-y-2">
-            <p className="text-[10px] uppercase text-muted">Biểu đồ phân bố</p>
+            <p className="text-[10px] uppercase text-muted">{tr("Biểu đồ phân bố")}</p>
             {(["r", "g", "b"] as const).map((ch) => (
               <div key={ch} className="flex h-8 items-end gap-px">
                 {hist[ch].map((v, i) => (
@@ -481,6 +488,7 @@ function ImageEditor({ file, doc }: { file: FileRecord; doc: ImageDocument }) {
 }
 
 function TextEditor({ file, doc }: { file: FileRecord; doc: TextDocument }) {
+  useLanguage();
   const [mode, setMode] = useState<"edit" | "preview">(doc.kind === "markdown" ? "preview" : "edit");
   const html = useMemo(() => {
     if (doc.kind !== "markdown") return "";
@@ -490,13 +498,13 @@ function TextEditor({ file, doc }: { file: FileRecord; doc: TextDocument }) {
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-muted">
         <span>
-          {doc.wordCount} từ · {doc.lineCount} dòng · {doc.encoding}
+          {doc.wordCount} {tr("từ ·")} {doc.lineCount} {tr("dòng ·")} {doc.encoding}
         </span>
         {doc.kind === "markdown" && (
           <div className="ml-auto flex gap-1">
-            <Button size="xs" variant={mode === "edit" ? "secondary" : "ghost"} onClick={() => setMode("edit")}>Mã nguồn
+            <Button size="xs" variant={mode === "edit" ? "secondary" : "ghost"} onClick={() => setMode("edit")}>{tr("Mã nguồn")}
             </Button>
-            <Button size="xs" variant={mode === "preview" ? "secondary" : "ghost"} onClick={() => setMode("preview")}>Xem trước
+            <Button size="xs" variant={mode === "preview" ? "secondary" : "ghost"} onClick={() => setMode("preview")}>{tr("Xem trước")}
             </Button>
           </div>
         )}
@@ -513,11 +521,12 @@ function TextEditor({ file, doc }: { file: FileRecord; doc: TextDocument }) {
 }
 
 function StructuredEditor({ file, doc }: { file: FileRecord; doc: StructuredDocument }) {
+  useLanguage();
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
-        <Badge tone={doc.valid ? "success" : "danger"}>{doc.valid ? "hợp lệ" : "không hợp lệ"}</Badge>
-        <span className="text-[11px] text-muted">{doc.pathCount} nút</span>
+        <Badge tone={doc.valid ? "success" : "danger"}>{doc.valid ? tr("hợp lệ") : tr("không hợp lệ")}</Badge>
+        <span className="text-[11px] text-muted">{doc.pathCount} {tr("nút")}</span>
         <span className="ml-auto text-[11px] text-faint">{file.name}</span>
       </div>
       {doc.error && <div className="border-b border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">{doc.error}</div>}
@@ -527,11 +536,12 @@ function StructuredEditor({ file, doc }: { file: FileRecord; doc: StructuredDocu
 }
 
 function ArchiveEditor({ file, doc }: { file: FileRecord; doc: ArchiveDocument }) {
+  useLanguage();
   return (
     <div className="flex h-full min-h-0 flex-col p-3">
       <div className="mb-3 flex items-center gap-2 text-[12px] text-muted">
-        {doc.entries.length} mục · tỷ lệ {doc.ratio.toFixed(1)}×
-        <Button size="xs" variant="secondary" onClick={() => void runActionUi("archive.extract", [file.id])}>Giải nén tệp an toàn
+        {doc.entries.length} {tr("mục · tỷ lệ")} {doc.ratio.toFixed(1)}×
+        <Button size="xs" variant="secondary" onClick={() => void runActionUi("archive.extract", [file.id])}>{tr("Giải nén tệp an toàn")}
         </Button>
       </div>
       {doc.warnings.map((w) => (
@@ -544,7 +554,7 @@ function ArchiveEditor({ file, doc }: { file: FileRecord; doc: ArchiveDocument }
           <div key={e.path} className="flex items-center gap-2 border-b border-border px-2 py-1.5 text-[12px]">
             <span className="min-w-0 flex-1 truncate font-mono">{e.path}</span>
             <span className="mono text-faint">{e.size}</span>
-            {e.unsafe && <Badge tone="danger">{e.reason ?? "không an toàn"}</Badge>}
+            {e.unsafe && <Badge tone="danger">{e.reason ?? tr("không an toàn")}</Badge>}
           </div>
         ))}
       </div>
@@ -553,6 +563,7 @@ function ArchiveEditor({ file, doc }: { file: FileRecord; doc: ArchiveDocument }
 }
 
 function HexEditor({ file, doc }: { file: FileRecord; doc?: BinaryDocument }) {
+  useLanguage();
   const [text, setText] = useState("");
   useEffect(() => {
     let gone = false;
@@ -573,7 +584,7 @@ function HexEditor({ file, doc }: { file: FileRecord; doc?: BinaryDocument }) {
       <pre className="flex-1 overflow-auto bg-surface-2 p-3 font-mono text-[11px] leading-5">{text}</pre>
       {doc?.strings.length ? (
         <div className="mt-2 max-h-32 overflow-auto border-t border-border pt-2 text-[11px]">
-          <p className="mb-1 text-muted">Chuỗi ký tự</p>
+          <p className="mb-1 text-muted">{tr("Chuỗi ký tự")}</p>
           {doc.strings.slice(0, 40).map((s, i) => (
             <div key={i} className="truncate font-mono text-foreground/80">
               {s}
@@ -586,6 +597,7 @@ function HexEditor({ file, doc }: { file: FileRecord; doc?: BinaryDocument }) {
 }
 
 function MediaEditor({ file, doc }: { file: FileRecord; doc: MediaDocument }) {
+  useLanguage();
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     blobUrl(file.id).then(setUrl);
@@ -602,25 +614,26 @@ function MediaEditor({ file, doc }: { file: FileRecord; doc: MediaDocument }) {
         </div>
       )}
       <p className="text-xs text-muted">
-        {doc.duration ? `${doc.duration.toFixed(1)}s` : ""} {doc.width && doc.height ? `${doc.width}×${doc.height}` : ""}
+        {doc.duration ? `${doc.duration.toFixed(1)}s` : ""} {doc.width && doc.height ? tr(`${doc.width}×${doc.height}`) : ""}
       </p>
-      <p className="text-[11px] text-faint">Trình duyệt hỗ trợ phát và chụp nội dung, chưa hỗ trợ chuyển mã.</p>
+      <p className="text-[11px] text-faint">{tr("Trình duyệt hỗ trợ phát và chụp nội dung, chưa hỗ trợ chuyển mã.")}</p>
     </div>
   );
 }
 
 function DocxEditor({ file, doc }: { file: FileRecord; doc: DocxDocument }) {
+  useLanguage();
   const html = useMemo(() => DOMPurify.sanitize(doc.html), [doc.html]);
   return (
     <div className="flex h-full min-h-0">
       <aside className="hidden w-48 overflow-auto border-r border-border p-3 text-[12px] md:block">
-        <p className="mb-2 text-[10px] uppercase text-muted">Mục lục</p>
+        <p className="mb-2 text-[10px] uppercase text-muted">{tr("Mục lục")}</p>
         {doc.headings.map((h, i) => (
           <div key={i} className="truncate" style={{ paddingLeft: (h.level - 1) * 8 }}>
             {h.text}
           </div>
         ))}
-        {doc.hasMacros && <Badge tone="warn" className="mt-3">có macro (không thực thi)</Badge>}
+        {doc.hasMacros && <Badge tone="warn" className="mt-3">{tr("có macro (không thực thi)")}</Badge>}
       </aside>
       <div className="flex-1 overflow-auto px-8 py-6 text-sm" dangerouslySetInnerHTML={{ __html: html }} />
       <span className="hidden">{file.id}</span>
@@ -629,6 +642,7 @@ function DocxEditor({ file, doc }: { file: FileRecord; doc: DocxDocument }) {
 }
 
 function PptxEditor({ file, doc }: { file: FileRecord; doc: PresentationDocument }) {
+  useLanguage();
   const [i, setI] = useState(0);
   const slide = doc.slides[i];
   return (

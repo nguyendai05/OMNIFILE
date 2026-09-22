@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/use-language";
+import { t as tr } from "@/lib/locale";
 import { actionRegistry } from "@/core/registries";
 import { useMemo } from "react";
 import { useWorkspace } from "@/core/store";
@@ -5,6 +7,7 @@ import { openTab } from "@/core/engine";
 import { FileKindIcon } from "./FileIcon";
 
 export function LineageView({ compact = false }: { compact?: boolean }) {
+  useLanguage();
   const lineage = useWorkspace((s) => s.lineage);
   const files = useWorkspace((s) => s.files);
   const selected = useWorkspace((s) => s.selectedIds[0]);
@@ -21,7 +24,7 @@ export function LineageView({ compact = false }: { compact?: boolean }) {
 
   if (!lineage.length) {
     return (
-      <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">Tệp dẫn xuất và thao tác tạo tệp sẽ xuất hiện tại đây.
+      <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">{tr("Tệp dẫn xuất và thao tác tạo tệp sẽ xuất hiện tại đây.")}
       </div>
     );
   }
@@ -35,7 +38,7 @@ export function LineageView({ compact = false }: { compact?: boolean }) {
             className="mb-1 w-full rounded-md px-2 py-1.5 text-left hover:bg-surface-2"
             onClick={() => e.toIds[0] && openTab(e.toIds[0])}
           >
-            <div className="font-medium">{actionRegistry.get(e.actionId)?.title ?? e.actionTitle}</div>
+            <div className="font-medium">{tr(actionRegistry.get(e.actionId)?.title ?? e.actionTitle)}</div>
             <div className="truncate text-[11px] text-muted">
               {e.fromIds.map((id) => files[id]?.name ?? "?").join(", ")} → {e.toIds.map((id) => files[id]?.name ?? "?").join(", ")}
             </div>
@@ -50,7 +53,7 @@ export function LineageView({ compact = false }: { compact?: boolean }) {
       <div className="mx-auto flex max-w-3xl flex-col gap-3">
         {lineage.map((e) => (
           <div key={e.id} className="rounded-lg border border-border bg-surface p-3">
-            <div className="mb-2 text-[11px] uppercase tracking-wide text-muted">{actionRegistry.get(e.actionId)?.title ?? e.actionTitle}</div>
+            <div className="mb-2 text-[11px] uppercase tracking-wide text-muted">{tr(actionRegistry.get(e.actionId)?.title ?? e.actionTitle)}</div>
             <div className="flex flex-wrap items-center gap-2 text-[12px]">
               {e.fromIds.map((id) => (
                 <FileChip key={id} id={id} />
@@ -81,6 +84,7 @@ export function LineageView({ compact = false }: { compact?: boolean }) {
 }
 
 function FileChip({ id }: { id: string }) {
+  useLanguage();
   const file = useWorkspace((s) => s.files[id]);
   if (!file) return <span className="text-faint">{id.slice(0, 8)}</span>;
   return (

@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/use-language";
+import { t as tr } from "@/lib/locale";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 
@@ -10,6 +12,7 @@ function errorMessage(error: unknown): string {
 }
 
 export function AppErrorComponent({ error }: ErrorComponentProps) {
+  useLanguage();
   return (
     <main
       className={
@@ -20,7 +23,7 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
       <span className="text-red-500" aria-hidden="true">
         <TriangleAlert className="size-10" strokeWidth={2} />
       </span>
-      <h1 className="text-lg font-semibold">Đã xảy ra lỗi</h1>
+      <h1 className="text-lg font-semibold">{tr("Đã xảy ra lỗi")}</h1>
       <p className="max-w-md text-sm break-words text-zinc-500 dark:text-zinc-400">
         {errorMessage(error)}
       </p>

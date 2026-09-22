@@ -1,3 +1,4 @@
+import { useLanguage } from "@/lib/use-language";
 import {
   Archive,
   AudioLines,
@@ -15,6 +16,7 @@ import type { DocumentKind } from "@/core/types";
 import { cn } from "@/lib/utils";
 
 export function FileKindIcon({ kind, className }: { kind: DocumentKind; className?: string }) {
+  useLanguage();
   const cls = cn("size-3.5 shrink-0", className);
   switch (kind) {
     case "pdf":

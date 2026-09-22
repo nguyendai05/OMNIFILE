@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/use-language";
+import { t as tr } from "@/lib/locale";
 import { uiLabel } from "@/lib/locale";
 import { useCallback, useEffect, useMemo } from "react";
 import {
@@ -32,6 +34,7 @@ function asData(node: Node): PipelineNodeData {
 }
 
 function OmniNode({ data }: NodeProps) {
+  useLanguage();
   const d = data as unknown as PipelineNodeData;
   const tone =
     d.status === "running"
@@ -47,9 +50,9 @@ function OmniNode({ data }: NodeProps) {
     <div className={cn("min-w-44 rounded-md border bg-surface-2 px-3 py-2 shadow-[var(--shadow-border)]", tone)}>
       {d.kind !== "input" && <Handle type="target" position={Position.Left} />}
       <div className="text-[10px] uppercase tracking-wide text-muted">{uiLabel(d.kind)}</div>
-      <div className="text-[12px] font-medium">{d.actionId ? actionRegistry.get(d.actionId)?.title ?? d.title : d.title}</div>
+      <div className="text-[12px] font-medium">{d.actionId ? tr(actionRegistry.get(d.actionId)?.title ?? d.title) : d.title}</div>
       <div className="status-color text-[10px]" data-status={uiLabel(d.status)}>{uiLabel(d.status)}</div>
-      {d.error && <div className="mt-1 max-w-48 text-[10px] text-danger">{d.error}</div>}
+      {d.error && <div className="mt-1 max-w-48 text-[10px] text-danger">{tr(d.error)}</div>}
       {d.kind !== "output" && <Handle type="source" position={Position.Right} />}
     </div>
   );
@@ -58,6 +61,7 @@ function OmniNode({ data }: NodeProps) {
 const nodeTypes = { omni: OmniNode };
 
 export function PipelineView() {
+  useLanguage();
   const theme = useWorkspace((s) => s.ui.theme);
   const pipelines = useWorkspace((s) => Object.values(s.pipelines));
   const activeId = useWorkspace((s) => s.activePipelineId);
@@ -96,7 +100,7 @@ export function PipelineView() {
       const tgt = nodes.find((n) => n.id === c.target);
       if (!src || !tgt) return false;
       const check = canConnect(asData(src).produces, asData(tgt).accepts);
-      if (!check.ok) toast.error(check.reason);
+      if (!check.ok) toast.error(tr(check.reason ?? "Không thể kết nối"));
       return check.ok;
     },
     [nodes],
@@ -148,7 +152,7 @@ export function PipelineView() {
       data: {
         kind: "input",
         fileId: file?.id,
-        title: file ? file.name : "Tệp đầu vào",
+        title: file ? file.name : tr("Tệp đầu vào"),
         accepts: [],
         produces: file ? [file.kind] : (["pdf"] as DocumentKind[]),
         config: {},
@@ -165,8 +169,8 @@ export function PipelineView() {
   if (!pipeline) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3">
-        <p className="text-sm text-muted">Chưa có quy trình.</p>
-        <Button onClick={() => void createPipeline("PDF to Excel")}>Tạo quy trình</Button>
+        <p className="text-sm text-muted">{tr("Chưa có quy trình.")}</p>
+        <Button onClick={() => void createPipeline("PDF to Excel")}>{tr("Tạo quy trình")}</Button>
       </div>
     );
   }
@@ -174,27 +178,27 @@ export function PipelineView() {
   return (
     <div className="flex h-full min-h-0">
       <aside className="w-52 shrink-0 overflow-auto border-r border-border p-2">
-        <p className="px-1 pb-2 text-[10px] font-medium uppercase tracking-wide text-muted">Các bước</p>
-        <Button size="sm" variant="secondary" className="mb-2 w-full" onClick={addInput}>Đầu vào (tệp đã chọn)
+        <p className="px-1 pb-2 text-[10px] font-medium uppercase tracking-wide text-muted">{tr("Các bước")}</p>
+        <Button size="sm" variant="secondary" className="mb-2 w-full" onClick={addInput}>{tr("Đầu vào (tệp đã chọn)")}
         </Button>
-        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">Mẫu</p>
+        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">{tr("Mẫu")}</p>
         {RECIPES.slice(0, 4).map((r) => (
           <button
             key={r.id}
             onClick={() => void createPipelineFromRecipe(r.id, selected)}
             className="mb-0.5 w-full rounded-sm px-2 py-1 text-left text-[11px] hover:bg-surface-2"
           >
-            {r.title}
+            {tr(r.title)}
           </button>
         ))}
-        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">Thao tác</p>
+        <p className="px-1 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted">{tr("Thao tác")}</p>
         {actions.map((a) => (
           <button
             key={a.id}
             onClick={() => addAction(a.id)}
             className="mb-0.5 flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-[11px] hover:bg-surface-2"
           >
-            <span>{a.title}</span>
+            <span>{tr(a.title)}</span>
           </button>
         ))}
       </aside>
@@ -204,21 +208,21 @@ export function PipelineView() {
             size="sm"
             onClick={() =>
               void runPipeline(pipeline.id)
-                .then(() => toast.success("Đã hoàn tất quy trình"))
-                .catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e)))
+                .then(() => toast.success(tr("Đã hoàn tất quy trình")))
+                .catch((e: unknown) => toast.error(tr(e instanceof Error ? e.message : String(e))))
             }
-          >Chạy quy trình
+          >{tr("Chạy quy trình")}
           </Button>
         </div>
         <ReactFlow
           className="omni-flow"
           ariaLabelConfig={{
-            "controls.ariaLabel": "Điều khiển quy trình",
-            "controls.zoomIn.ariaLabel": "Phóng to",
-            "controls.zoomOut.ariaLabel": "Thu nhỏ",
-            "controls.fitView.ariaLabel": "Vừa khung nhìn",
-            "controls.interactive.ariaLabel": "Bật/tắt tương tác",
-            "minimap.ariaLabel": "Sơ đồ thu nhỏ",
+            "controls.ariaLabel": tr("Điều khiển quy trình"),
+            "controls.zoomIn.ariaLabel": tr("Phóng to"),
+            "controls.zoomOut.ariaLabel": tr("Thu nhỏ"),
+            "controls.fitView.ariaLabel": tr("Vừa khung nhìn"),
+            "controls.interactive.ariaLabel": tr("Bật/tắt tương tác"),
+            "minimap.ariaLabel": tr("Sơ đồ thu nhỏ"),
           }}
           colorMode={theme}
           nodes={nodes}

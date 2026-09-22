@@ -11,7 +11,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/core/table-ops.test.ts src/core/mime.test.ts src/core/lineage.test.ts src/core/recipes.test.ts src/parsers/pdf-tables.test.ts",
+    "test": "node --experimental-strip-types --test src/lib/locale.test.ts src/core/table-ops.test.ts src/core/mime.test.ts src/core/lineage.test.ts src/core/recipes.test.ts src/parsers/pdf-tables.test.ts",
     "test:smoke": "node scripts/browser-smoke.mjs",
     "lint": "eslint .",
     "format": "prettier --write src vite.config.ts"
