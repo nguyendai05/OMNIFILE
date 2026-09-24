@@ -11,8 +11,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/locale.test.ts src/core/table-ops.test.ts src/core/mime.test.ts src/core/lineage.test.ts src/core/recipes.test.ts src/parsers/pdf-tables.test.ts src/exporters/pdf-docx.test.ts",
+    "test": "node --experimental-strip-types --test src/lib/locale.test.ts src/core/table-ops.test.ts src/core/compare-data.test.ts src/core/semaphore.test.ts src/core/pipeline-graph.test.ts src/core/mime.test.ts src/core/lineage.test.ts src/core/recipes.test.ts src/parsers/pdf-tables.test.ts src/exporters/pdf-docx.test.ts",
     "test:smoke": "node scripts/browser-smoke.mjs",
+    "test:pdf-docx": "node scripts/pdf-docx-smoke.mjs",
     "lint": "eslint .",
     "format": "prettier --write src vite.config.ts"
   },

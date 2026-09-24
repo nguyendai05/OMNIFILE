@@ -5,6 +5,8 @@ import mammoth from "mammoth";
 import { XMLValidator } from "fast-xml-parser";
 import { exportPdfToDocx, parsePageRange, DOCX_MIME } from "./pdf-docx.ts";
 import type { PdfDocument, PdfPageModel } from "../core/types.ts";
+import { extractTablesFromItems } from "../parsers/pdf-tables.ts";
+import { normalizePdfItem, wordFont } from "../parsers/pdf-text.ts";
 
 const page = (index: number, text: string): PdfPageModel => ({
   index,
@@ -102,7 +104,7 @@ test("tables become editable cells without duplicating text and can be disabled"
   assert.ok(out.text.indexOf("Notes") > out.text.indexOf("42"));
   const plain = await unpack((await exportPdfToDocx(pdf([p]), { tables: false })).blob);
   assert.ok(!plain.html.includes("<table>"));
-  assert.match(plain.text, /Alpha 42/);
+  assert.match(plain.text, /Alpha\s+42/);
 });
 
 test("scans fail clearly, mixed PDFs warn, and cancellation creates no artifact", async () => {
@@ -125,4 +127,139 @@ test("scans fail clearly, mixed PDFs warn, and cancellation creates no artifact"
     }),
     /Phạm vi/,
   );
+});
+
+test("layout retains font families, page margins, alignment and source line spacing", async () => {
+  const p = page(0, "Title Body line Next line Date");
+  p.items = [
+    {
+      str: "Title",
+      x: 256,
+      y: 720,
+      w: 100,
+      h: 20,
+      fontName: "ABCDEF+TimesNewRomanPS-BoldMT",
+      bold: true,
+    },
+    { str: "Body line", x: 54, y: 676, w: 504, h: 12, fontName: "Times-Roman" },
+    { str: "Next line", x: 54, y: 658, w: 504, h: 12, fontName: "Times-Roman" },
+    { str: "Date", x: 498, y: 620, w: 60, h: 11, fontName: "CourierNewPSMT" },
+  ];
+  const out = await unpack((await exportPdfToDocx(pdf([p]))).blob);
+  assert.match(out.xml, /w:ascii="Times New Roman"/);
+  assert.match(out.xml, /w:ascii="Courier New"/);
+  assert.match(out.xml, /<w:jc w:val="center"/);
+  assert.match(out.xml, /<w:jc w:val="right"/);
+  assert.match(out.xml, /w:left="1080"/);
+  assert.match(out.xml, /w:after="84"[^>]*w:line="276"/);
+  assert.match(out.xml, /w:lineRule="exact"/);
+});
+
+test("two columns retain column reading order below a spanning heading", async () => {
+  const p = page(0, "Heading Left Right");
+  p.items = [{ str: "Heading", x: 250, y: 740, w: 112, h: 20 }];
+  for (let i = 0; i < 4; i++) {
+    p.items.push(
+      {
+        str: `Left ${i}: a sufficiently long sentence in this paragraph.`,
+        x: 54,
+        y: 700 - i * 18,
+        w: 220,
+        h: 12,
+      },
+      {
+        str: `Right ${i}: another long sentence in the other paragraph.`,
+        x: 338,
+        y: 700 - i * 18,
+        w: 220,
+        h: 12,
+      },
+    );
+  }
+  p.tables = extractTablesFromItems(p.items, 0);
+  const out = await unpack((await exportPdfToDocx(pdf([p]))).blob);
+  assert.ok(out.text.indexOf("Heading") < out.text.indexOf("Left 0"));
+  assert.ok(out.text.indexOf("Left 3") < out.text.indexOf("Right 0"));
+  assert.match(out.xml, /w:val="nil"/);
+  assert.equal(out.text.split("Left 0").length - 1, 1);
+});
+
+test("editable tables preserve unequal column widths and source cell fonts", async () => {
+  const p = page(0, "Product Total Alpha 42");
+  p.items = [
+    { str: "Product", x: 54, y: 700, w: 150, h: 14, fontName: "Times-Roman", bold: true },
+    { str: "Total", x: 450, y: 700, w: 54, h: 14, fontName: "Times-Roman" },
+    { str: "Alpha", x: 54, y: 680, w: 100, h: 12, fontName: "Times-Roman", italic: true },
+    { str: "42", x: 480, y: 680, w: 24, h: 12, fontName: "Courier" },
+  ];
+  p.tables = extractTablesFromItems(p.items, 0);
+  const out = await unpack((await exportPdfToDocx(pdf([p]))).blob);
+  const widths = [...out.xml.matchAll(/<w:gridCol w:w="(\d+)"/g)].map((m) => +m[1]!);
+  assert.equal(widths.length, 2);
+  assert.ok(widths[0]! > widths[1]! * 2);
+  assert.match(out.xml, /w:ascii="Courier New"/);
+  assert.match(out.xml, /<w:i\/>/);
+  const plain = await unpack((await exportPdfToDocx(pdf([p]), { formatting: false })).blob);
+  assert.ok(!plain.xml.includes('w:ascii="Courier New"'));
+  assert.ok(!plain.xml.includes("<w:b/>"));
+});
+
+test("superscripts and small fragments are retained without splitting or duplication", async () => {
+  const p = page(0, "E = mc2");
+  p.items = [
+    { str: "E = mc", x: 54, y: 700, w: 42, h: 12 },
+    { str: "2", x: 96, y: 705, w: 4, h: 7 },
+  ];
+  const out = await unpack((await exportPdfToDocx(pdf([p]))).blob);
+  assert.match(out.text, /E = mc2/);
+  assert.match(out.xml, /<w:position w:val="5pt"/);
+});
+
+test("PDF coordinates apply crop offset, UserUnit and page rotation before export", () => {
+  const input = { str: "Crop", transform: [12, 0, 0, 12, 72, 700], width: 30, height: 12 };
+  const normal = normalizePdfItem(
+    input,
+    { transform: [2, 0, 0, -2, -40, 1520], height: 1520, scale: 1 },
+    "Times-Roman",
+    { ascent: 0.9 },
+  );
+  assert.equal(normal.x, 104);
+  assert.equal(normal.y, 1400);
+  assert.equal(normal.w, 60);
+  assert.equal(normal.h, 24);
+  assert.equal(normal.ascent, 0.9);
+  assert.equal(normal.angle, 0);
+  const rotated = normalizePdfItem(
+    { ...input, transform: [0, 12, -12, 0, 72, 700] },
+    { transform: [0, 1, 1, 0, 0, 0], height: 612, scale: 1 },
+    "Helvetica",
+  );
+  assert.equal(rotated.x, 700);
+  assert.equal(rotated.y, 540);
+  assert.equal(rotated.angle, 0);
+  assert.equal(rotated.h, 12);
+});
+
+test("font aliases resolve without losing custom families", () => {
+  assert.equal(wordFont("ABCDEF+TimesNewRomanPS-ItalicMT"), "Times New Roman");
+  assert.equal(wordFont("Helvetica-Bold"), "Arial");
+  assert.equal(wordFont("CourierNewPSMT"), "Courier New");
+  assert.equal(wordFont("ABCDEF+Roboto-Bold"), "Roboto");
+  assert.equal(wordFont("g_d0_f1", "serif"), "Times New Roman");
+  assert.equal(wordFont("g_d0_f1", "sans-serif"), "Arial");
+});
+
+test("a side note beside a table survives exactly once", async () => {
+  const p = page(0, "Name Count Alpha 42 Side note");
+  p.items = [
+    { str: "Name", x: 50, y: 700, w: 40, h: 10 },
+    { str: "Count", x: 150, y: 700, w: 40, h: 10 },
+    { str: "Alpha", x: 50, y: 680, w: 40, h: 10 },
+    { str: "42", x: 150, y: 680, w: 40, h: 10 },
+  ];
+  p.tables = extractTablesFromItems(p.items, 0);
+  p.items.push({ str: "Side note", x: 350, y: 700, w: 60, h: 10 });
+  const out = await unpack((await exportPdfToDocx(pdf([p]))).blob);
+  for (const text of ["Name", "Count", "Alpha", "42", "Side note"])
+    assert.equal(out.text.split(text).length - 1, 1, text);
 });

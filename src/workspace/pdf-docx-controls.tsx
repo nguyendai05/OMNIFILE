@@ -77,7 +77,7 @@ export function PdfDocxControls({ file, doc }: { file: FileRecord; doc: PdfDocum
                 disabled={busy}
                 onChange={(e) => setFormatting(e.target.checked)}
               />
-              {t("Giữ cỡ chữ, in đậm và in nghiêng")}
+              {t("Giữ font chữ, căn lề, giãn dòng và bố cục cột")}
             </label>
             <label className="flex min-h-11 items-center gap-2 text-xs">
               <input

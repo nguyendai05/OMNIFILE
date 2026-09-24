@@ -33,6 +33,7 @@ import {
 import { workspaceStore } from "./store";
 import { scoreSearch } from "./table-ops";
 import { getRecipe, recipesFor, type Recipe } from "./recipes";
+import { planPipeline } from "./pipeline-graph";
 import type {
   Artifact,
   DocumentKind,
@@ -82,7 +83,7 @@ export async function bootstrapWorkspace() {
       lineage: persisted.lineage,
       history: persisted.history ?? s.history,
       hydrated: true,
-      layout: ui?.layout ?? s.layout,
+      layout: { ...s.layout, ...ui?.layout },
       ui: { ...s.ui, theme: ui?.theme ?? s.ui.theme },
       tabs: ui?.tabs ?? s.tabs,
       activeTabId: ui?.activeTabId ?? s.activeTabId,
@@ -808,30 +809,8 @@ export function savePipeline(pipeline: Pipeline) {
 export async function runPipeline(pipelineId: string) {
   const pipeline = workspaceStore.getState().pipelines[pipelineId];
   if (!pipeline) throw new OmniError("NotFound", "Không tìm thấy quy trình");
-  const byId = new Map(pipeline.nodes.map((n) => [n.id, n]));
-  const incoming = new Map<string, string[]>();
-  for (const n of pipeline.nodes) incoming.set(n.id, []);
-  for (const e of pipeline.edges) {
-    incoming.get(e.target)?.push(e.source);
-  }
-  const incomingCount = new Map<string, number>();
-  for (const n of pipeline.nodes) incomingCount.set(n.id, incoming.get(n.id)?.length ?? 0);
-  const queue = pipeline.nodes.filter((n) => (incomingCount.get(n.id) ?? 0) === 0).map((n) => n.id);
+  const { byId, incoming, order } = planPipeline(pipeline.nodes, pipeline.edges);
   const outputs = new Map<string, string[]>();
-  const order: string[] = [];
-  const counts = new Map(incomingCount);
-  while (queue.length) {
-    const id = queue.shift()!;
-    order.push(id);
-    for (const e of pipeline.edges.filter((x) => x.source === id)) {
-      const c = (counts.get(e.target) ?? 1) - 1;
-      counts.set(e.target, c);
-      if (c === 0) queue.push(e.target);
-    }
-  }
-  if (order.length !== pipeline.nodes.length) {
-    throw new OmniError("InvalidConnection", "Quy trình có vòng lặp");
-  }
   for (const nodeId of order) {
     const node = byId.get(nodeId)!;
     updateNodeStatus(pipelineId, nodeId, "running");

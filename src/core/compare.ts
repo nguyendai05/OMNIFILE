@@ -1,7 +1,8 @@
 import { diffLines } from "diff";
-import type { CompareResult, DocumentModel, FileRecord } from "./types";
+import type { CellValue, CompareResult, DocumentModel, FileRecord } from "./types";
 import { getDocument } from "./documents";
 import { extractIndexText } from "./documents";
+import { compareJsonValues, compareTableRows, comparisonText } from "./compare-data.ts";
 
 export interface CompareAdapter {
   id: string;
@@ -11,7 +12,7 @@ export interface CompareAdapter {
 
 function textOf(file: FileRecord): string {
   const doc = getDocument(file.id);
-  return extractIndexText(doc) || "";
+  return comparisonText(doc) ?? extractIndexText(doc);
 }
 
 const textAdapter: CompareAdapter = {
@@ -46,28 +47,9 @@ const jsonAdapter: CompareAdapter = {
   compare(a, b) {
     const da = getDocument(a.id);
     const db = getDocument(b.id);
-    const hunks: CompareResult["hunks"] = [];
-    walk(da && "parsed" in da ? da.parsed : null, db && "parsed" in db ? db.parsed : null, "$", hunks);
-    return { kind: "json", summary: `${hunks.filter((h) => h.type !== "equal").length} khác biệt`, hunks: hunks.slice(0, 400) };
+    return compareJsonValues(da && "parsed" in da ? da.parsed : null, db && "parsed" in db ? db.parsed : null);
   },
 };
-
-function walk(a: unknown, b: unknown, path: string, hunks: CompareResult["hunks"]) {
-  if (Object.is(a, b)) return;
-  if (a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a) && !Array.isArray(b)) {
-    const keys = new Set([...Object.keys(a as object), ...Object.keys(b as object)]);
-    for (const k of keys) walk((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}.${k}`, hunks);
-    return;
-  }
-  if (Array.isArray(a) && Array.isArray(b)) {
-    const n = Math.max(a.length, b.length);
-    for (let i = 0; i < n; i++) walk(a[i], b[i], `${path}[${i}]`, hunks);
-    return;
-  }
-  if (a === undefined) hunks.push({ type: "add", right: JSON.stringify(b), path });
-  else if (b === undefined) hunks.push({ type: "remove", left: JSON.stringify(a), path });
-  else hunks.push({ type: "change", left: JSON.stringify(a), right: JSON.stringify(b), path });
-}
 
 const spreadsheetAdapter: CompareAdapter = {
   id: "spreadsheet",
@@ -76,22 +58,11 @@ const spreadsheetAdapter: CompareAdapter = {
   compare(a, b) {
     const left = rowsOf(getDocument(a.id));
     const right = rowsOf(getDocument(b.id));
-    const hunks: CompareResult["hunks"] = [];
-    const max = Math.max(left.length, right.length);
-    let changed = 0;
-    for (let i = 0; i < max; i++) {
-      const l = JSON.stringify(left[i] ?? []);
-      const r = JSON.stringify(right[i] ?? []);
-      if (l !== r) {
-        changed++;
-        hunks.push({ type: "change", left: l, right: r, path: `row ${i + 1}` });
-      }
-    }
-    return { kind: "spreadsheet", summary: `${changed} dòng khác nhau`, hunks: hunks.slice(0, 200), metrics: { changed } };
+    return compareTableRows(left, right);
   },
 };
 
-function rowsOf(doc: DocumentModel | undefined): unknown[] {
+function rowsOf(doc: DocumentModel | undefined): CellValue[][] {
   if (doc?.kind === "table") return doc.rows;
   if (doc?.kind === "spreadsheet") return doc.sheets[0]?.rows ?? [];
   return [];

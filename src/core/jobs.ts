@@ -1,6 +1,9 @@
 import { makeId } from "./ids";
 import type { ExecutionEnv, Job, JobStatus } from "./types";
 import { workspaceStore } from "./store";
+import { Semaphore } from "./semaphore";
+
+export { Semaphore } from "./semaphore";
 
 const MAX_LOGS = 200;
 
@@ -52,29 +55,6 @@ export function setJobStatus(id: string, status: JobStatus, extra?: Partial<Job>
       : {}),
     ...extra,
   });
-}
-
-export class Semaphore {
-  private waiting: Array<() => void> = [];
-  private active = 0;
-  constructor(private limit: number) {}
-  async acquire(): Promise<() => void> {
-    if (this.active < this.limit) {
-      this.active++;
-      return () => this.release();
-    }
-    await new Promise<void>((resolve) => this.waiting.push(resolve));
-    this.active++;
-    return () => this.release();
-  }
-  private release() {
-    this.active = Math.max(0, this.active - 1);
-    const next = this.waiting.shift();
-    if (next) next();
-  }
-  get activeCount() {
-    return this.active;
-  }
 }
 
 export const parseSemaphore = new Semaphore(3);

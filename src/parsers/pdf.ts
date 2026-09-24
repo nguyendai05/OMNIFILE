@@ -8,6 +8,7 @@ import type {
 } from "@/core/types";
 import { OmniError, throwIfAborted } from "@/core/errors";
 import { extractTablesFromItems } from "./pdf-tables";
+import { normalizePdfItem } from "./pdf-text";
 
 let workerReady = false;
 
@@ -30,7 +31,7 @@ function infoString(v: unknown): string {
 
 export const pdfParser: FileParser = {
   id: "pdf",
-  version: "1.1.0",
+  version: "1.2.0",
   label: "PDF",
   supports: (f: FileRecord) => f.kind === "pdf" || f.detectedMime === "application/pdf",
   async parse(file, ctx: ParserContext): Promise<PdfDocument> {
@@ -72,7 +73,6 @@ export const pdfParser: FileParser = {
         let text = "";
         for (const it of content.items) {
           if (!("str" in it)) continue;
-          const tr = it.transform as number[];
           const font: unknown = page.commonObjs.has(it.fontName)
             ? page.commonObjs.get(it.fontName)
             : undefined;
@@ -80,15 +80,7 @@ export const pdfParser: FileParser = {
             font && typeof font === "object" && "name" in font
               ? String(font.name)
               : (content.styles[it.fontName]?.fontFamily ?? "");
-          const item: PdfTextItem = {
-            str: it.str,
-            x: tr[4] ?? 0,
-            y: tr[5] ?? 0,
-            w: it.width ?? 0,
-            h: it.height ?? 0,
-            bold: /bold|black|heavy/i.test(fontName),
-            italic: /italic|oblique/i.test(fontName),
-          };
+          const item = normalizePdfItem(it, viewport, fontName, content.styles[it.fontName]);
           items.push(item);
           text += it.str;
           if ("hasEOL" in it && it.hasEOL) text += "\n";
@@ -103,6 +95,7 @@ export const pdfParser: FileParser = {
           text: text.replace(/[ \t]+\n/g, "\n").trim(),
           tables,
           items,
+          layoutVersion: 2,
         });
         texts.push(pages[pages.length - 1]!.text);
       }

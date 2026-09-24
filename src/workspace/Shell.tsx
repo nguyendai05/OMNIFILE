@@ -18,6 +18,15 @@ import {
   X,
   Pin,
   FolderOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  PanelBottomClose,
+  PanelBottomOpen,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
 } from "lucide-react";
 import { bootstrapRegistries } from "@/core/bootstrap";
 import {
@@ -62,6 +71,7 @@ import { FileKindIcon } from "./FileIcon";
 import { runActionUi, runBatchUi, runRecipeUi } from "./run";
 import { RECIPES } from "@/core/recipes";
 import { errorMessage } from "@/core/errors";
+import { setWorkspaceLayout } from "./layout";
 
 bootstrapRegistries();
 
@@ -92,7 +102,11 @@ export function Shell() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [layoutRevision, setLayoutRevision] = useState(0);
   const [diag, setDiag] = useState(diagnosticsSnapshot());
+  const explorerOpen = !layout.explorerCollapsed && !layout.focusMode;
+  const inspectorOpen = !layout.inspectorCollapsed && !layout.focusMode;
+  const jobsOpen = !layout.bottomCollapsed && !layout.focusMode;
 
   useEffect(() => {
     restoreLanguage();
@@ -142,10 +156,11 @@ export function Shell() {
       }
       if (meta && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
-        workspaceStore.setState((s) => ({ layout: { ...s.layout, activity: "search" } }));
+        setWorkspaceLayout({ activity: "search", explorerCollapsed: false, focusMode: false });
       }
       if (e.key === "Escape") {
         workspaceStore.setState((s) => ({ ui: { ...s.ui, contextMenu: null, dropMenu: null, commandOpen: false } }));
+        if (workspaceStore.getState().layout.focusMode) setWorkspaceLayout({ focusMode: false });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -168,16 +183,20 @@ export function Shell() {
     await importBrowserFiles(arr, "drop");
   }
 
-  const left = (
-    <div className="flex h-full min-h-0">
-      <nav className="flex w-11 shrink-0 flex-col items-center gap-1 border-r border-border bg-sidebar py-2">
+  const activityRail = (
+      <nav aria-label={tr("Điều hướng không gian làm việc")} className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-border bg-sidebar py-2">
         {activities.map((a) => (
           <button
             key={a.id}
             title={tr(a.label)}
-            onClick={() => workspaceStore.setState((s) => ({ layout: { ...s.layout, activity: a.id } }))}
+            aria-label={tr(a.label)}
+            aria-current={layout.activity === a.id ? "page" : undefined}
+            onClick={() => {
+              setWorkspaceLayout({ activity: a.id, explorerCollapsed: false, focusMode: false });
+              if (isMobile && (a.id === "pipelines" || a.id === "lineage")) setMobileTab("view");
+            }}
             className={cn(
-              "flex size-8 items-center justify-center rounded-md text-muted hover:bg-surface-2 hover:text-foreground",
+              "flex size-11 items-center justify-center rounded-md text-muted hover:bg-surface-2 hover:text-foreground md:size-9",
               layout.activity === a.id && "bg-surface-3 text-foreground",
             )}
           >
@@ -185,7 +204,17 @@ export function Shell() {
           </button>
         ))}
       </nav>
-      <div className="min-w-0 flex-1">
+  );
+
+  const left = (
+    <div className="flex h-full min-h-0">
+      {isMobile && activityRail}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-2">
+          <span className="text-xs font-medium">{tr(activities.find((a) => a.id === layout.activity)?.label ?? "Tệp")}</span>
+          {!isMobile && <Button size="icon" variant="ghost" aria-label={tr("Thu gọn danh sách tệp")} title={tr("Thu gọn danh sách tệp")} onClick={() => setWorkspaceLayout({ explorerCollapsed: true })}><PanelLeftClose /></Button>}
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto">
         {layout.activity === "files" && <Explorer />}
         {layout.activity === "pipelines" && (
           <div className="p-2">
@@ -207,12 +236,13 @@ export function Shell() {
         )}
         {layout.activity === "lineage" && <LineageView compact />}
         {layout.activity === "search" && <WorkspaceSearch />}
+        </div>
       </div>
     </div>
   );
 
   const center = (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
       <div className="flex items-center gap-1 overflow-x-auto border-b border-border bg-surface px-1">
         {tabs.map((t) => {
           const f = files[t.fileId];
@@ -220,7 +250,7 @@ export function Shell() {
             <div
               key={t.id}
               className={cn(
-                "group flex items-center gap-1 border-r border-border px-2 py-1.5 text-[12px]",
+                "group flex shrink-0 items-center gap-1 border-r border-border px-2 py-1.5 text-[12px]",
                 t.id === activeTabId ? "bg-background" : "text-muted hover:bg-surface-2",
               )}
               onContextMenu={(e) => {
@@ -228,12 +258,12 @@ export function Shell() {
                 togglePinTab(t.id);
               }}
             >
-              <button className="flex items-center gap-1" onClick={() => workspaceStore.setState({ activeTabId: t.id, selectedIds: [t.fileId] })}>
+              <button title={t.title} className="flex min-h-8 items-center gap-1" onClick={() => workspaceStore.setState({ activeTabId: t.id, selectedIds: [t.fileId] })}>
                 {f && <FileKindIcon kind={f.kind} />}
                 <span className="max-w-40 truncate">{t.title}</span>
                 {t.pinned && <Pin className="size-2.5 text-accent" />}
               </button>
-              <button className="rounded-sm p-0.5 opacity-0 hover:bg-surface-3 group-hover:opacity-100" onClick={() => closeTab(t.id)} aria-label={tr("Đóng thẻ")}>
+              <button className="rounded-sm p-1 text-muted hover:bg-surface-3 hover:text-foreground focus-visible:opacity-100 md:opacity-50 md:group-hover:opacity-100" onClick={() => closeTab(t.id)} aria-label={tr("Đóng thẻ")}>
                 <X className="size-3" />
               </button>
             </div>
@@ -262,7 +292,8 @@ export function Shell() {
       <div className="flex items-center gap-2 border-b border-border px-2 py-1 text-[11px]">
         <span className="font-medium">{tr("Tác vụ")}</span>
         <Badge tone={running ? "info" : "muted"}>{running ? tr(`${running} đang chạy`) : tr("chờ")}</Badge>
-        <span className="ml-auto text-faint">{tr("CỤC BỘ · tệp được xử lý trong trình duyệt")}</span>
+        <span className="ml-auto hidden truncate text-faint xl:block">{tr("CỤC BỘ · tệp được xử lý trong trình duyệt")}</span>
+        <Button className="ml-auto xl:ml-0" size="icon" variant="ghost" aria-label={tr("Thu gọn tác vụ")} title={tr("Thu gọn tác vụ")} onClick={() => setWorkspaceLayout({ bottomCollapsed: true })}><PanelBottomClose /></Button>
       </div>
       <div className="flex-1 overflow-auto">
         {jobs
@@ -270,7 +301,7 @@ export function Shell() {
           .reverse()
           .map((j) => (
             <div key={j.id} className="flex items-center gap-2 border-b border-border/60 px-3 py-1.5 text-[12px]">
-              <span className="status-color w-20 capitalize" data-status={uiLabel(j.status)}>{uiLabel(j.status)}</span>
+              <span className="status-color w-20 capitalize" data-status={j.status}>{uiLabel(j.status)}</span>
               <span className="min-w-0 flex-1 truncate">{tr(j.title)}</span>
               <span className="w-36 truncate text-faint">{tr(j.message ?? j.error?.message ?? "")}</span>
               <span className="w-16 text-right mono text-faint">{j.progress === null ? "—" : `${Math.round((j.progress ?? 0) * 100)}%`}</span>
@@ -353,7 +384,7 @@ export function Shell() {
         </div>
       </header>
 
-      {suggestions.length > 0 && (
+      {suggestions.length > 0 && !layout.focusMode && (
         <div className="flex gap-2 overflow-x-auto border-b border-border bg-surface-2 px-3 py-1.5 text-[12px]">
           {suggestions.slice(0, 4).map((s) => (
             <button
@@ -397,27 +428,44 @@ export function Shell() {
           </nav>
         </div>
       ) : (
-        <Group orientation="horizontal" className="min-h-0 flex-1">
-          <Panel id="explorer" defaultSize="18%" minSize="12%" maxSize="32%" className="bg-sidebar">
-            {left}
-          </Panel>
-          <Separator className="w-1 bg-border hover:bg-accent/40" />
-          <Panel id="main" minSize="40%">
-            <Group orientation="vertical" className="h-full">
-              <Panel id="editor" minSize="40%">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex h-10 shrink-0 items-center gap-1 border-b border-border bg-surface px-2" aria-label={tr("Bố cục không gian làm việc")}>
+            <span className="mr-2 hidden text-xs text-muted lg:block">{tr("Không gian làm việc")}</span>
+            <Button size="sm" variant={explorerOpen ? "secondary" : "ghost"} aria-expanded={explorerOpen} aria-controls="workspace-explorer" title={tr(explorerOpen ? "Thu gọn danh sách tệp" : "Mở danh sách tệp")} onClick={() => setWorkspaceLayout({ explorerCollapsed: explorerOpen, focusMode: false })}>{explorerOpen ? <PanelLeftClose /> : <PanelLeftOpen />}{tr("Danh sách tệp")}</Button>
+            <Button size="sm" variant={inspectorOpen ? "secondary" : "ghost"} aria-expanded={inspectorOpen} aria-controls="workspace-inspector" title={tr(inspectorOpen ? "Thu gọn thông tin" : "Mở thông tin")} onClick={() => setWorkspaceLayout({ inspectorCollapsed: inspectorOpen, focusMode: false })}>{inspectorOpen ? <PanelRightClose /> : <PanelRightOpen />}{tr("Thông tin")}</Button>
+            <Button size="sm" variant={jobsOpen ? "secondary" : "ghost"} aria-expanded={jobsOpen} aria-controls="workspace-jobs" title={tr(jobsOpen ? "Thu gọn tác vụ" : "Mở tác vụ")} onClick={() => setWorkspaceLayout({ bottomCollapsed: jobsOpen, focusMode: false })}>{jobsOpen ? <PanelBottomClose /> : <PanelBottomOpen />}{tr("Tác vụ")}{running > 0 && <Badge tone="info">{running}</Badge>}</Button>
+            <div className="ml-auto flex items-center gap-1">
+              <Button size="sm" variant={layout.focusMode ? "secondary" : "ghost"} aria-pressed={layout.focusMode} title={tr("Chế độ tập trung · Esc để thoát")} onClick={() => setWorkspaceLayout({ focusMode: !layout.focusMode })}>{layout.focusMode ? <Minimize2 /> : <Maximize2 />}{tr(layout.focusMode ? "Thoát tập trung" : "Tập trung")}</Button>
+              <Button size="icon" variant="ghost" title={tr("Khôi phục các panel")} aria-label={tr("Khôi phục các panel")} onClick={() => { setWorkspaceLayout({ explorerCollapsed: false, inspectorCollapsed: false, bottomCollapsed: false, stepsCollapsed: false, minimapVisible: true, focusMode: false, explorerSize: 20, inspectorSize: 24, bottomSize: 22, stepsSize: 240, stepsClosedGroups: [], inspectorClosedSections: ["metadata", "lineage", "recent"] }); setLayoutRevision((value) => value + 1); }}><RotateCcw /></Button>
+            </div>
+          </div>
+          <div className="flex min-h-0 flex-1">
+          {activityRail}
+          <Group key={layoutRevision} orientation="horizontal" className="min-h-0 min-w-0 flex-1" onLayoutChanged={(sizes, meta) => {
+            if (!meta.isUserInteraction) return;
+            setWorkspaceLayout({ ...(sizes.explorer ? { explorerSize: sizes.explorer } : {}), ...(sizes.inspector ? { inspectorSize: sizes.inspector } : {}) });
+          }}>
+          {explorerOpen && <Panel key="explorer" id="explorer" defaultSize={`${layout.explorerSize}%`} minSize="12%" maxSize="30%" className="bg-sidebar"><div id="workspace-explorer" className="h-full">{left}</div></Panel>}
+          {explorerOpen && <Separator key="explorer-resize" className="w-1 bg-border hover:bg-accent/40" />}
+          <Panel key="main" id="main" minSize="40%">
+            <Group orientation="vertical" className="h-full" onLayoutChanged={(sizes, meta) => {
+              if (meta.isUserInteraction && sizes.jobs) setWorkspaceLayout({ bottomSize: sizes.jobs });
+            }}>
+              <Panel key="editor" id="editor" minSize="40%">
                 {center}
               </Panel>
-              <Separator className="h-1 bg-border hover:bg-accent/40" />
-              <Panel id="jobs" defaultSize="22%" minSize="12%" maxSize="40%" className="bg-surface">
-                {bottom}
-              </Panel>
+              {jobsOpen && <Separator key="jobs-resize" className="h-1 bg-border hover:bg-accent/40" />}
+              {jobsOpen && <Panel key="jobs" id="jobs" defaultSize={`${layout.bottomSize}%`} minSize="12%" maxSize="40%" className="bg-surface"><div id="workspace-jobs" className="h-full">{bottom}</div></Panel>}
             </Group>
           </Panel>
-          <Separator className="w-1 bg-border hover:bg-accent/40" />
-          <Panel id="inspector" defaultSize="22%" minSize="16%" maxSize="36%" className="bg-surface">
-            <Inspector />
-          </Panel>
-        </Group>
+          {inspectorOpen && <Separator key="inspector-resize" className="w-1 bg-border hover:bg-accent/40" />}
+          {inspectorOpen && <Panel key="inspector" id="inspector" defaultSize={`${layout.inspectorSize}%`} minSize="16%" maxSize="36%" className="bg-surface"><div id="workspace-inspector" className="flex h-full min-h-0 flex-col">
+            <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-2"><span className="text-xs font-medium">{tr("Thông tin tệp")}</span><Button size="icon" variant="ghost" aria-label={tr("Thu gọn thông tin")} title={tr("Thu gọn thông tin")} onClick={() => setWorkspaceLayout({ inspectorCollapsed: true })}><PanelRightClose /></Button></div>
+            <div className="min-h-0 flex-1"><Inspector /></div>
+          </div></Panel>}
+          </Group>
+          </div>
+        </div>
       )}
 
       <footer className="flex h-7 shrink-0 items-center gap-3 border-t border-border bg-surface px-3 text-[10px] uppercase tracking-wide text-muted">

@@ -218,6 +218,12 @@ export interface PdfTextItem {
   y: number;
   w: number;
   h: number;
+  fontName?: string;
+  fontFamily?: string;
+  ascent?: number;
+  descent?: number;
+  /** Text angle after applying the page crop/rotation, in degrees. */
+  angle?: number;
   bold?: boolean;
   italic?: boolean;
 }
@@ -229,7 +235,10 @@ export interface ExtractedTable {
   rows: string[][];
   confidence: number;
   /** PDF text baselines belonging to this table, in PDF coordinates. */
-  bounds?: { top: number; bottom: number };
+  bounds?: { top: number; bottom: number; left?: number; right?: number };
+  columnBounds?: { left: number; right: number }[];
+  /** Original fragments for each row/cell, including the first row. */
+  cellItems?: PdfTextItem[][][];
 }
 
 export interface PdfPageModel {
@@ -240,6 +249,8 @@ export interface PdfPageModel {
   text: string;
   items?: PdfTextItem[];
   tables: ExtractedTable[];
+  /** Version of the normalized PDF geometry and font metadata. */
+  layoutVersion?: number;
 }
 
 export interface PdfDocument {
@@ -491,6 +502,12 @@ export interface LayoutState {
   explorerCollapsed: boolean;
   inspectorCollapsed: boolean;
   bottomCollapsed: boolean;
+  stepsCollapsed: boolean;
+  minimapVisible: boolean;
+  focusMode: boolean;
+  inspectorClosedSections?: string[];
+  stepsSize?: number;
+  stepsClosedGroups?: string[];
 }
 
 export interface UiState {

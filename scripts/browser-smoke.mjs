@@ -19,6 +19,12 @@ try {
     await page.waitForFunction(() => document.body.innerText.includes("OMNIFILE"));
     await page.getByRole("button", { name: "Mở", exact: true }).waitFor({ timeout: 60000 });
     await page.waitForFunction(() => !document.body.innerText.includes("Đang đọc tệp"), undefined, { timeout: 60000 });
+    // Samples create a pipeline, so select the files activity before checking the PDF.
+    const navigation = page.getByRole("navigation", { name: "Điều hướng không gian làm việc" });
+    if (!await navigation.isVisible()) await page.getByRole("button", { name: "Tệp", exact: true }).click();
+    await navigation.getByRole("button", { name: "Tệp", exact: true }).click();
+    const view = page.getByRole("button", { name: "Xem", exact: true });
+    if (await view.isVisible()) await view.click();
     // A visible shell can still hide an unrendered PDF canvas (default 300 × 150).
     await page.waitForFunction(() => {
       const canvas = document.querySelector("canvas");

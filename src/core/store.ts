@@ -46,6 +46,9 @@ const defaultLayout: LayoutState = {
   explorerCollapsed: false,
   inspectorCollapsed: false,
   bottomCollapsed: false,
+  stepsCollapsed: false,
+  minimapVisible: true,
+  focusMode: false,
 };
 
 const defaultUi: UiState = {
