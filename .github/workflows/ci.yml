@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Toolchain thật · typecheck · lint · test · build · smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 là bản pinned trong package.json engines và .nvmrc.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # README yêu cầu rõ npm 10: npm 11 có thể bỏ mục optional peer dependency
+      # mà npm 10 cần trong lockfile. Pin tường minh để ý định này nằm trong CI.
+      - name: Pin npm 10
+        run: npm install -g npm@10
+
+      - name: Lockfile tương thích (npm ci --dry-run bằng npm 10)
+        run: npm ci --dry-run
+
+      - name: Cài dependencies từ lockfile
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests (10 suites, gồm pdf-docx)
+        run: npm test
+
+      # Build trên Linux → artifact đúng chuẩn deploy (Vercel runtime là Linux),
+      # khắc phục cảnh báo "builder OS/arch win32-x64" của Nitro khi build trên Windows.
+      - name: Build (Vite + Nitro, preset vercel)
+        run: npm run build
+
+      - name: Cài Playwright Chromium (+ system deps)
+        run: npx playwright install --with-deps chromium
+
+      # Smoke trên dev server: vừa kiểm tra dev pipeline, vừa tạo baseline
+      # screenshots/ci-dev.json cho bước prod (browser-smoke nhận baseline ở argv[4],
+      # fail nếu prod lệch title hoặc có lỗi console).
+      - name: Smoke bản dev (baseline 8080)
+        run: |
+          npm run dev > dev.log 2>&1 &
+          dev_pid=$!
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1 && break; sleep 2; done
+          curl -sf http://127.0.0.1:8080/ >/dev/null
+          node scripts/browser-smoke.mjs http://127.0.0.1:8080/ ci-dev
+          kill $dev_pid
+
+      # Smoke trên production preview (nitro, cổng 8081 theo vite.config.ts):
+      # cả 3 script đều chạy — kể cả workspace-ux (QA-3: script chưa có alias trong package.json).
+      - name: Smoke bản production (8081)
+        run: |
+          npm run preview > preview.log 2>&1 &
+          preview_pid=$!
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8081/ >/dev/null 2>&1 && break; sleep 2; done
+          curl -sf http://127.0.0.1:8081/ >/dev/null
+          node scripts/browser-smoke.mjs http://127.0.0.1:8081/ ci screenshots/ci-dev.json
+          node scripts/pdf-docx-smoke.mjs http://127.0.0.1:8081/ ci
+          node scripts/workspace-ux-smoke.mjs http://127.0.0.1:8081/ ci
+          kill $preview_pid
+
+      - name: Nộp artefact smoke (ảnh · docx · json · log server)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ github.sha }}
+          path: |
+            screenshots/
+            dev.log
+            preview.log
+          if-no-files-found: ignore
